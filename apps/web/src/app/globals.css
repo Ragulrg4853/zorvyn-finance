@@ -1,0 +1,128 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Syne:wght@400;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg:           #0a0f1e;
+  --color-surface:      #111827;
+  --color-surface-2:    #1a2235;
+  --color-border:       #1e2d45;
+  --color-primary:      #00d4aa;
+  --color-primary-dim:  #00a885;
+  --color-gold:         #d4af37;
+  --color-gold-dim:     #b8962e;
+  --color-text-1:       #f0f4ff;
+  --color-text-2:       #8b9dc3;
+  --color-text-3:       #4a5568;
+  --color-error:        #ef4444;
+  --color-warning:      #f59e0b;
+  --color-success:      #10b981;
+  --color-income:       #22c55e;
+  --color-expense:      #ef4444;
+  --radius-card:  12px;
+  --radius-input: 8px;
+  --radius-btn:   6px;
+  --shadow-card:       0 8px 32px rgba(0,212,170,0.08);
+  --shadow-card-hover: 0 12px 40px rgba(0,212,170,0.15);
+  --transition-base: all 200ms ease-out;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background-color: var(--color-bg);
+  color: var(--color-text-1);
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--color-surface); }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-primary); }
+
+::selection { background: rgba(0,212,170,0.2); }
+
+.card {
+  background: rgba(17,24,39,0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0,212,170,0.1);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  transition: var(--transition-base);
+}
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card-hover);
+  border-color: rgba(0,212,170,0.2);
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: #0a0f1e;
+  border: none;
+  border-radius: var(--radius-btn);
+  font-weight: 600;
+  padding: 0.625rem 1.25rem;
+  cursor: pointer;
+  transition: var(--transition-base);
+}
+.btn-primary:hover  { background: var(--color-primary-dim); transform: translateY(-1px); }
+.btn-primary:active { transform: scale(0.98); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--color-text-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-btn);
+  padding: 0.625rem 1.25rem;
+  cursor: pointer;
+  transition: var(--transition-base);
+}
+.btn-ghost:hover { border-color: var(--color-primary); color: var(--color-primary); }
+
+.input {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-input);
+  color: var(--color-text-1);
+  padding: 0.625rem 0.875rem;
+  transition: var(--transition-base);
+  width: 100%;
+  outline: none;
+}
+.input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(0,212,170,0.1); }
+.input::placeholder { color: var(--color-text-3); }
+
+.badge { display: inline-flex; align-items: center; padding: 0.25rem 0.625rem;
+  border-radius: 50px; font-size: 0.75rem; font-weight: 600; }
+.badge-income  { background: rgba(34,197,94,0.15);   color: var(--color-income); }
+.badge-expense { background: rgba(239,68,68,0.15);   color: var(--color-expense); }
+.badge-viewer  { background: rgba(139,157,195,0.15); color: var(--color-text-2); }
+.badge-analyst { background: rgba(212,175,55,0.15);  color: var(--color-gold); }
+.badge-admin   { background: rgba(0,212,170,0.15);   color: var(--color-primary); }
+
+@keyframes skeleton-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg,
+    var(--color-surface) 25%,
+    var(--color-surface-2) 50%,
+    var(--color-surface) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+  border-radius: var(--radius-input);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+.fade-in { animation: fade-in 300ms ease-out forwards; }
+
+h1, h2, h3 { font-family: 'Syne', sans-serif; }
