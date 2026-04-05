@@ -1,5 +1,5 @@
 import React from 'react';
-import { Table, Button, Badge } from '../../../shared/components';
+import { Table, Button, Badge } from '@/shared/components/ui';
 
 export function UserTable({ users, loading, onEdit, onDeactivate }) {
   const columns = [

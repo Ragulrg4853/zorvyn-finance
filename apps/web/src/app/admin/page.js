@@ -10,7 +10,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import ProtectedRoute from '../../shared/components/auth/ProtectedRoute';
+import ProtectedRoute from '../../micro-apps/auth/components/ProtectedRoute';
 import { useUsers } from '../../micro-apps/admin/hooks/useUsers';
 import { useRoles } from '../../micro-apps/admin/hooks/useRoles';
 import { UserTable } from '../../micro-apps/admin/components/UserTable';

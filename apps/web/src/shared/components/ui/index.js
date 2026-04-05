@@ -1,0 +1,1 @@
+export const Badge = ({children}) => <span className='badge'>{children}</span>; export const Table = ({children}) => <table>{children}</table>; export const Button = ({children}) => <button>{children}</button>; export const Pagination = () => <div></div>;
