@@ -16,17 +16,22 @@ import { useRoles } from '../../micro-apps/admin/hooks/useRoles';
 import { UserTable } from '../../micro-apps/admin/components/UserTable';
 import { PermissionMatrix } from '../../micro-apps/admin/components/PermissionMatrix';
 import { AuditLogViewer } from '../../micro-apps/admin/components/AuditLogViewer';
-import { Tabs, Tab } from '../../shared/components/ui/Tabs';
-import { Button } from '../../shared/components/ui';
+import AppShell from '../../shared/components/layout/AppShell';
+import { useAuth } from '../../micro-apps/auth/hooks/useAuth';
+import { motion, AnimatePresence } from 'framer-motion';
+import { UserPlus, Shield, Users, Activity } from 'lucide-react';
+import LoadingSpinner from '../../shared/components/feedback/LoadingSpinner';
 
 export default function AdminPage() {
+  const { user, hasPermission, logout } = useAuth();
   const { users, loading: usersLoading, error: usersError, meta: usersMeta, filters: userFilters, setFilters: setUserFilters, deactivateUser } = useUsers();
   const { roles, permissions, auditLogs, loading: rolesLoading, auditLoading, error: rolesError, assignPermissions, auditFilters, setAuditFilters, auditMeta } = useRoles();
 
   const [activeTab, setActiveTab] = useState('users');
 
-  const handleEditUser = (user) => {
-    console.log('Edit user:', user);
+  const handleEditUser = (u) => {
+    // Stub
+    console.log('Edit user:', u);
   };
 
   const handleDeactivate = (userId) => {
@@ -35,65 +40,120 @@ export default function AdminPage() {
     }
   };
 
+  const tabs = [
+    { id: 'users', label: 'User Management', icon: Users },
+    { id: 'roles', label: 'Roles & Permissions', icon: Shield },
+    { id: 'audit', label: 'System Audit Logs', icon: Activity },
+  ];
+
   return (
     <ProtectedRoute requiredPermissions={['roles:read', 'users:read']}>
-      <main style={{ padding: '2rem', background: 'var(--color-bg)', minHeight: '100vh', color: 'var(--color-text)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-          <h1 style={{ fontFamily: 'Syne', color: 'var(--color-gold)', fontSize: '2rem' }}>Admin Dashboard</h1>
-          {activeTab === 'users' && <Button onClick={() => console.log('invite')}>Invite User</Button>}
-        </div>
-
-        {(usersError || rolesError) && (
-          <div style={{ padding: '1rem', background: 'rgba(255, 0, 0, 0.1)', color: 'red', borderRadius: '4px', marginBottom: '1rem' }}>
-            {usersError || rolesError}
-          </div>
-        )}
-
-        {/* Temporary tab buttons since Tabs component might not be fully styled for this route yet */}
-        <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem', marginBottom: '2rem' }}>
-          <button style={{ color: activeTab === 'users' ? 'var(--color-gold)' : 'var(--color-text-2)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', fontWeight: activeTab === 'users' ? 'bold' : 'normal' }} onClick={() => setActiveTab('users')}>User Management</button>
-          <button style={{ color: activeTab === 'roles' ? 'var(--color-gold)' : 'var(--color-text-2)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', fontWeight: activeTab === 'roles' ? 'bold' : 'normal' }} onClick={() => setActiveTab('roles')}>Roles & Permissions</button>
-          <button style={{ color: activeTab === 'audit' ? 'var(--color-gold)' : 'var(--color-text-2)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', fontWeight: activeTab === 'audit' ? 'bold' : 'normal' }} onClick={() => setActiveTab('audit')}>System Audit Logs</button>
-        </div>
-
-        {activeTab === 'users' && (
-          <div>
-            <div style={{ marginBottom: '1rem' }}>
-              <input 
-                type="text" 
-                placeholder="Search..." 
-                style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)', width: '250px' }}
-                onChange={e => setUserFilters({ ...userFilters, search: e.target.value })}
-              />
+      <AppShell user={user} onLogout={logout} hasPermission={hasPermission} pageTitle="Administration">
+        <div className="flex flex-col h-full min-h-0 w-full animate-in fade-in duration-500">
+          
+          {/* Header Row */}
+          <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4 mb-6 shrink-0">
+            <h1 className="text-3xl font-syne font-bold text-gray-100 tracking-wide hidden md:block">
+              Administration
+            </h1>
+            
+            <div className="flex items-center justify-end w-full md:w-auto h-10">
+              {activeTab === 'users' && hasPermission('users:write') && (
+                <button 
+                  onClick={() => console.log('Invite')}
+                  className="btn-primary flex items-center justify-center gap-2 h-10 px-5 border border-[var(--color-primary)] rounded-lg font-medium shadow-[0_0_15px_rgba(var(--color-primary-rgb),0.3)] hover:shadow-[0_0_25px_rgba(var(--color-primary-rgb),0.5)] transition-all bg-[var(--color-primary)] text-white whitespace-nowrap"
+                >
+                  <UserPlus size={18} />
+                  Invite User
+                </button>
+              )}
             </div>
-            <UserTable 
-              users={users} 
-              loading={usersLoading} 
-              onEdit={handleEditUser} 
-              onDeactivate={handleDeactivate} 
-            />
           </div>
-        )}
 
-        {activeTab === 'roles' && (
-          <PermissionMatrix 
-            roles={roles} 
-            permissions={permissions} 
-            onChangePermissions={assignPermissions} 
-            loading={rolesLoading} 
-          />
-        )}
+          {(usersError || rolesError) && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }} 
+              animate={{ opacity: 1, height: 'auto' }} 
+              className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start gap-3 shrink-0"
+            >
+              <p className="text-sm font-medium text-red-200">{usersError || rolesError}</p>
+            </motion.div>
+          )}
 
-        {activeTab === 'audit' && (
-          <AuditLogViewer 
-            logs={auditLogs} 
-            loading={auditLoading} 
-            meta={auditMeta} 
-            filters={auditFilters} 
-            onFilterChange={setAuditFilters} 
-          />
-        )}
-      </main>
+          {/* Glow Tabs Navigation */}
+          <div className="relative mb-6 flex items-center gap-2 overflow-x-auto hide-scrollbars-on-mobile shrink-0 border-b border-white/10 pb-2">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`relative flex items-center gap-2 px-5 py-3 rounded-lg text-sm font-semibold tracking-wider uppercase transition-all duration-300 ${
+                    isActive ? 'text-[var(--color-primary)]' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+                  }`}
+                >
+                  <Icon size={16} className={isActive ? "text-[var(--color-primary)]" : "text-gray-500"} />
+                  {tab.label}
+                  
+                  {/* Animated Tab Indicator */}
+                  {isActive && (
+                    <motion.div 
+                      layoutId="adminTabIndicator"
+                      className="absolute bottom-[-9px] left-0 right-0 h-0.5 bg-[var(--color-primary)] shadow-[0_0_10px_var(--color-primary)]"
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Dynamic Content Panel */}
+          <div className="flex-1 min-h-0 w-full rounded-2xl border border-[var(--color-border)] bg-[rgba(10,15,30,0.4)] backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col relative">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+                className="flex-1 flex flex-col h-full overflow-hidden"
+              >
+                {activeTab === 'users' && (
+                  <UserTable 
+                    users={users} 
+                    loading={usersLoading} 
+                    onEdit={handleEditUser} 
+                    onDeactivate={handleDeactivate}
+                    filters={userFilters}
+                    onFilterChange={setUserFilters}
+                    meta={usersMeta}
+                  />
+                )}
+                {activeTab === 'roles' && (
+                  <PermissionMatrix 
+                    roles={roles} 
+                    permissions={permissions} 
+                    onChangePermissions={assignPermissions} 
+                    loading={rolesLoading} 
+                  />
+                )}
+                {activeTab === 'audit' && (
+                  <AuditLogViewer 
+                    logs={auditLogs} 
+                    loading={auditLoading} 
+                    meta={auditMeta} 
+                    filters={auditFilters} 
+                    onFilterChange={setAuditFilters} 
+                  />
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+        </div>
+      </AppShell>
     </ProtectedRoute>
   );
 }

@@ -14,16 +14,20 @@ def list_permissions(db: Session) -> List[Permission]:
     return db.query(Permission).order_by(Permission.name.asc()).all()
 
 def assign_permissions(db: Session, role_id: UUID, grant_ids: List[UUID], revoke_ids: List[UUID]) -> Role:
-    for g_id in grant_ids:
-        exists = db.query(RolePermission).filter_by(role_id=role_id, permission_id=g_id).first()
-        if not exists:
-            rp = RolePermission(role_id=role_id, permission_id=g_id)
-            db.add(rp)
-            
-    for r_id in revoke_ids:
-        exists = db.query(RolePermission).filter_by(role_id=role_id, permission_id=r_id).first()
-        if exists:
-            db.delete(exists)
+    if grant_ids:
+        existing_grants = {
+            rp.permission_id for rp in 
+            db.query(RolePermission).filter(RolePermission.role_id == role_id, RolePermission.permission_id.in_(grant_ids)).all()
+        }
+        for g_id in set(grant_ids):
+            if g_id not in existing_grants:
+                db.add(RolePermission(role_id=role_id, permission_id=g_id))
+                
+    if revoke_ids:
+        db.query(RolePermission).filter(
+            RolePermission.role_id == role_id,
+            RolePermission.permission_id.in_(revoke_ids)
+        ).delete(synchronize_session=False)
             
     db.commit()
     return get_role_by_id(db, role_id)

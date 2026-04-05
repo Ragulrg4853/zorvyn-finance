@@ -51,7 +51,7 @@ def list_filtered(db: Session, txn_type=None, category=None, date_from=None,
         )
     total    = q.count()
     sort_col = getattr(Transaction, sort, Transaction.date)
-    q = q.order_by(sort_col.desc() if order == "desc" else sort_col.asc())
+    q = q.order_by(sort_col.desc() if order == "desc" else sort_col.asc(), Transaction.id.asc())
     items = q.offset((page - 1) * page_size).limit(page_size).all()
     return items, total
 
@@ -73,7 +73,7 @@ def stream_filtered(db: Session, txn_type=None, category=None, date_from=None,
             Transaction.category.ilike(f"%{search}%")
         )
     sort_col = getattr(Transaction, sort, Transaction.date)
-    q = q.order_by(sort_col.desc() if order == "desc" else sort_col.asc())
+    q = q.order_by(sort_col.desc() if order == "desc" else sort_col.asc(), Transaction.id.asc())
     # yield_per sets the stream fetch size (driver support required, e.g. asyncpg/psycopg2)
     return q.yield_per(1000)
 

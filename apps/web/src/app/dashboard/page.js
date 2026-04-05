@@ -11,7 +11,7 @@
 import { useState } from 'react';
 import { useAuth } from '../../micro-apps/auth/hooks/useAuth';
 import ProtectedRoute from '../../micro-apps/auth/components/ProtectedRoute';
-import Navbar from '../../shared/components/layout/Navbar';
+import AppShell from '../../shared/components/layout/AppShell';
 import ErrorState from '../../shared/components/feedback/ErrorState';
 import { useDashboard } from '../../micro-apps/dashboard/hooks/useDashboard';
 import SummaryCard from '../../micro-apps/dashboard/components/SummaryCard';
@@ -33,84 +33,64 @@ export default function DashboardPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen">
-        <Navbar user={user} onLogout={logout} />
-        
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 relative z-10">
-          <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <h1 className="text-3xl font-syne font-bold text-gray-100">Financial Insights</h1>
+      <AppShell user={user} onLogout={logout} hasPermission={hasPermission} pageTitle="Dashboard">
+        <div className="h-full flex flex-col w-full gap-4 overflow-hidden">
+          {/* Header Row */}
+          <div className="shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <h1 className="text-2xl font-syne font-bold text-gray-100 tracking-tight">Financial Insights</h1>
             
-            <div className="flex flex-row items-center gap-2">
+            <div className="flex flex-row items-center gap-2 bg-[#111827]/80 backdrop-blur-md p-1.5 rounded-lg border border-white/5 shadow-sm">
               <input
                 type="date"
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
-                className="input bg-[rgba(10,15,30,0.5)] border border-[var(--color-border)] rounded-md text-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] text-gray-200 w-full sm:w-auto"
+                className="input bg-transparent border-none text-sm py-1.5 px-2 focus:outline-none focus:ring-1 focus:ring-primary/50 rounded text-gray-300 w-full sm:w-auto"
               />
-              <span className="text-gray-500">to</span>
+              <span className="text-gray-600 font-bold px-1 text-xs uppercase tracking-widest">to</span>
               <input
                 type="date"
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
-                className="input bg-[rgba(10,15,30,0.5)] border border-[var(--color-border)] rounded-md text-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] text-gray-200 w-full sm:w-auto"
+                className="input bg-transparent border-none text-sm py-1.5 px-2 focus:outline-none focus:ring-1 focus:ring-primary/50 rounded text-gray-300 w-full sm:w-auto"
               />
             </div>
           </div>
 
           {error && <ErrorState message={error} onRetry={refetch} />}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <SummaryCard 
-              title="Total Income" 
-              value={summary?.total_income} 
-              type="income" 
-              trend={5.2} 
-              delay={0} 
-              loading={loading} 
-            />
-            <SummaryCard 
-              title="Total Expense" 
-              value={summary?.total_expense} 
-              type="expense" 
-              trend={-2.1} 
-              delay={0.1} 
-              loading={loading} 
-            />
-            <SummaryCard 
-              title="Net Balance" 
-              value={summary?.net_balance} 
-              type="net" 
-              trend={3.4} 
-              delay={0.2} 
-              loading={loading} 
-            />
-            <SummaryCard 
-              title="Transactions" 
-              value={summary?.transaction_count} 
-              type="activity" 
-              delay={0.3} 
-              loading={loading} 
-            />
+          {/* Metrics Row */}
+          <div className="shrink-0 grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <SummaryCard title="Total Income" value={summary?.total_income} type="income" trend={5.2} delay={0} loading={loading} />
+            <SummaryCard title="Total Expense" value={summary?.total_expense} type="expense" trend={-2.1} delay={0.1} loading={loading} />
+            <SummaryCard title="Net Balance" value={summary?.net_balance} type="net" trend={3.4} delay={0.2} loading={loading} />
+            <SummaryCard title="Transactions" value={summary?.transaction_count} type="activity" delay={0.3} loading={loading} />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-             <div className="col-span-1 lg:col-span-2">
-                <TrendChart data={summary?.monthly_trends} loading={loading} />
-             </div>
-             <div className="col-span-1 lg:col-span-1">
-                <RecentActivity transactions={summary?.recent_transactions} loading={loading} />
-             </div>
-          </div>
+          {/* Main Body Grid */}
+          <div className="flex-1 min-h-0 flex flex-col xl:flex-row gap-4 pb-2">
+            
+            {/* Left Content (Charts) */}
+            <div className="flex-1 min-w-0 flex flex-col gap-4 overflow-y-auto pr-1 xl:pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+               <div className="flex-1 min-h-[300px]">
+                  <TrendChart data={summary?.monthly_trends} loading={loading} />
+               </div>
+               <div className="shrink-0 min-h-[320px]">
+                  <CategoryBreakdown 
+                    data={insights} 
+                    loading={loading} 
+                    locked={!hasPermission('dashboard:insights')} 
+                  />
+               </div>
+            </div>
 
-          <div className="mb-12 border border-[var(--color-border)] rounded-xl bg-[rgba(10,15,30,0.3)]">
-            <CategoryBreakdown 
-              data={insights} 
-              loading={loading} 
-              locked={!hasPermission('dashboard:insights')} 
-            />
+            {/* Right Content (Activity) */}
+            <div className="w-full xl:w-[380px] 2xl:w-[420px] shrink-0 h-[400px] xl:h-full flex flex-col min-h-0">
+               <RecentActivity transactions={summary?.recent_transactions} loading={loading} />
+            </div>
+
           </div>
-        </main>
-      </div>
+        </div>
+      </AppShell>
     </ProtectedRoute>
   );
 }

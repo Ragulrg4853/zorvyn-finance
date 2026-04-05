@@ -21,6 +21,7 @@ from shared.database import get_db
 from shared.middleware.rbac import require_permission
 from shared.middleware.correlation_id import get_correlation_id
 from shared.models.user import User, UserRole
+from shared.utils.validators import calculate_total_pages
 
 from micro_apps.users import service as users_service
 from micro_apps.users.schemas import UserCreate, UserUpdate, UserRead
@@ -37,7 +38,7 @@ def list_users(
     correlation_id: str = Depends(get_correlation_id),
 ):
     items, total = users_service.list_users(db, role=role, is_active=is_active, page=page, page_size=page_size)
-    total_pages = -(-total // page_size)
+    total_pages = calculate_total_pages(total, page_size)
     return {
         "data": [item.model_dump() for item in items],
         "meta": {

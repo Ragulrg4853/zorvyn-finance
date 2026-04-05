@@ -15,11 +15,12 @@ from shared.middleware.rbac import require_permission, get_current_user
 from shared.middleware.correlation_id import get_correlation_id
 from shared.models.user import User
 from shared.models.transaction import TransactionType
+from shared.utils.error_taxonomy import AppError, ErrorCode
+from shared.utils.validators import validate_date_range, calculate_total_pages
 from micro_apps.transactions import service as txn_service
 from micro_apps.transactions.schemas import TransactionCreate, TransactionUpdate
 
 router = APIRouter()
-
 
 @router.get("/export", summary="Export transactions as CSV [transactions:export]")
 def export_transactions(
@@ -32,6 +33,7 @@ def export_transactions(
     _: User = Depends(require_permission("transactions:export")),
 ):
     """Streams CSV download. Analyst and admin only."""
+    validate_date_range(date_from, date_to)
     return StreamingResponse(
         txn_service.stream_transactions_csv(
             db=db, txn_type=txn_type, category=category,
@@ -57,12 +59,13 @@ def list_transactions(
     _: User = Depends(require_permission("transactions:read")),
     correlation_id: str = Depends(get_correlation_id),
 ):
+    validate_date_range(date_from, date_to)
     items, total = txn_service.list_transactions(
         db=db, txn_type=txn_type, category=category,
         date_from=date_from, date_to=date_to, search=search,
         sort=sort, order=order, page=page, page_size=page_size,
     )
-    total_pages = -(-total // page_size)  # ceiling division
+    total_pages = calculate_total_pages(total, page_size)
     return {
         "data":  [i.model_dump() for i in items],
         "meta":  {"total": total, "page": page, "page_size": page_size,

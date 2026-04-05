@@ -7,6 +7,9 @@ from shared.models.role import Role
 from shared.models.permission import Permission
 from shared.utils.error_taxonomy import AppError, ErrorCode
 from shared.middleware.rbac import _PERMISSIONS_CACHE
+from shared.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 def invalidate_permission_cache(user_id: str):
     _PERMISSIONS_CACHE.pop(user_id, None)
@@ -33,12 +36,14 @@ def update_role_permissions(db: Session, role_id: UUID, payload: PermissionAssig
     if not role:
         raise AppError(code=ErrorCode.VALIDATION_001, http_status=status.HTTP_404_NOT_FOUND, field="role")
         
-    if role.name == "admin":
-        for r_id in payload.revoke:
-            p = db.query(Permission).filter(Permission.id == r_id).first()
-            if p and p.name == "roles:manage":
+    if role.name == "admin" and payload.revoke:
+        revoking_perms = db.query(Permission.name).filter(Permission.id.in_(payload.revoke)).all()
+        for (p_name,) in revoking_perms:
+            if p_name == "roles:manage":
+                logger.warning(f"Prevented removing roles:manage from admin role", extra={"action": "role_update_failed", "reason": "admin_cannot_lose_manage_roles"})
                 raise AppError(code=ErrorCode.RBAC_002, http_status=status.HTTP_400_BAD_REQUEST, field="revoke")
                 
     updated_role = roles_repo.assign_permissions(db, role_id, payload.grant, payload.revoke)
     _PERMISSIONS_CACHE.clear()  # Clear cache for all users when a role's permissions change
+    logger.info(f"Role {role_id} permissions updated", extra={"action": "role_permissions_updated", "role_id": str(role_id), "granted": payload.grant, "revoked": payload.revoke})
     return RoleRead.model_validate(updated_role)

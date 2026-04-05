@@ -8,7 +8,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from shared.database import get_db
-from shared.middleware.rbac import get_current_user
+from shared.middleware.rbac import get_current_user, block_token, oauth2_scheme
 from shared.middleware.correlation_id import get_correlation_id
 from shared.models.user import User
 from micro_apps.auth import service as auth_service
@@ -68,7 +68,11 @@ def get_me(
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT,
-             summary="Logout — client discards token")
-def logout(current_user: User = Depends(get_current_user)):
-    """JWT is stateless — client must discard token. 204 confirms request."""
+             summary="Logout — add token to blocklist")
+def logout(
+    token: str = Depends(oauth2_scheme),
+    current_user: User = Depends(get_current_user)
+):
+    """Client discards token. Blocklist prevents replay."""
+    block_token(token)
     return None

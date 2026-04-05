@@ -10,11 +10,13 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from shared.utils.error_taxonomy import AppError, ErrorCode
 from shared.models.transaction import TransactionType
+from shared.utils.logger import get_logger
 from micro_apps.transactions import repository as txn_repo
 from micro_apps.transactions.schemas import (
     TransactionCreate, TransactionUpdate, TransactionRead,
 )
 
+logger = get_logger(__name__)
 
 def create_transaction(db: Session, payload: TransactionCreate,
                        created_by: UUID) -> TransactionRead:
@@ -24,6 +26,7 @@ def create_transaction(db: Session, payload: TransactionCreate,
         category=payload.category, txn_date=payload.date,
         notes=payload.notes, created_by=created_by,
     )
+    logger.info(f"Transaction created: {record.id}", extra={"action": "transaction_created", "transaction_id": str(record.id), "amount": record.amount, "type": record.type.value})
     return TransactionRead.model_validate(record)
 
 
@@ -31,6 +34,7 @@ def get_transaction(db: Session, transaction_id: UUID) -> TransactionRead:
     """Fetches one transaction. Raises FINANCE_001 if not found or deleted."""
     record = txn_repo.get_by_id(db, transaction_id)
     if not record:
+        logger.warning(f"Transaction fetch failed: {transaction_id} not found.", extra={"action": "transaction_fetch_failed", "transaction_id": str(transaction_id)})
         raise AppError(code=ErrorCode.FINANCE_001, http_status=404)
     return TransactionRead.model_validate(record)
 
@@ -46,11 +50,14 @@ def update_transaction(db: Session, transaction_id: UUID,
     """Partially updates a transaction. Raises FINANCE_001 if not found."""
     record = txn_repo.get_by_id(db, transaction_id)
     if not record:
+        logger.warning(f"Transaction update failed: {transaction_id} not found.", extra={"action": "transaction_update_failed", "transaction_id": str(transaction_id)})
         raise AppError(code=ErrorCode.FINANCE_001, http_status=404)
-    for field, value in payload.model_dump(exclude_unset=True).items():
+    updates = payload.model_dump(exclude_unset=True)
+    for field, value in updates.items():
         setattr(record, field, value)
     db.commit()
     db.refresh(record)
+    logger.info(f"Transaction updated: {transaction_id}", extra={"action": "transaction_updated", "transaction_id": str(transaction_id), "updated_fields": list(updates.keys())})
     return TransactionRead.model_validate(record)
 
 
@@ -58,8 +65,10 @@ def delete_transaction(db: Session, transaction_id: UUID) -> None:
     """Soft-deletes a transaction. Constitution: CLAUDE.md #9."""
     record = txn_repo.get_by_id(db, transaction_id)
     if not record:
+        logger.warning(f"Transaction deletion failed: {transaction_id} not found.", extra={"action": "transaction_deletion_failed", "transaction_id": str(transaction_id)})
         raise AppError(code=ErrorCode.FINANCE_001, http_status=404)
     txn_repo.soft_delete(db, record)
+    logger.info(f"Transaction deleted: {transaction_id}", extra={"action": "transaction_deleted", "transaction_id": str(transaction_id)})
 
 
 def stream_transactions_csv(db: Session, **filters):

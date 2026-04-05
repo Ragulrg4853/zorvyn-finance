@@ -37,15 +37,15 @@ class TestUpdateRolePermissions:
         perm_id = uuid4()
 
         mock_role = DummyRole(id=role_id, name="admin", description="desc")
-        mock_perm = DummyPerm(id=perm_id, name="roles:manage", description="manage")
-        
-        db.query.return_value.filter.return_value.first.return_value = mock_perm
+        # Ensure our mock returns a tuple with the name string
+        db.query.return_value.filter.return_value.all.return_value = [("roles:manage",)]
         
         payload = PermissionAssign.model_construct(grant=[], revoke=[perm_id])
         
         with patch("micro_apps.roles.service.roles_repo.get_role_by_id", return_value=mock_role):
             with pytest.raises(AppError) as exc:
                 roles_service.update_role_permissions(db, role_id, payload)
+
         assert exc.value.detail["code"] == ErrorCode.RBAC_002.value
 
     def test_should_raise_validation001_when_grant_and_revoke_overlap(self):

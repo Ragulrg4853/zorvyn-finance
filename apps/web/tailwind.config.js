@@ -19,8 +19,8 @@ module.exports = {
         expense:       '#ef4444',
       },
       fontFamily: {
-        sans:    ['Inter', 'sans-serif'],
-        heading: ['Syne', 'sans-serif'],
+        sans: ['var(--font-inter)', 'sans-serif'],
+        heading: ['var(--font-syne)', 'sans-serif'],
       },
       borderRadius: { card: '12px', input: '8px', btn: '6px' },
       boxShadow: {

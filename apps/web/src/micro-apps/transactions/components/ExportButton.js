@@ -32,9 +32,9 @@ export default function ExportButton({ filters }) {
     <button 
       onClick={handleExport}
       disabled={exporting}
-      className="btn-ghost flex items-center justify-center gap-2 h-10 px-4 rounded-lg border border-[var(--color-border)] hover:bg-white/5 transition-colors whitespace-nowrap min-w-[120px]"
+      className="btn-ghost flex items-center justify-center gap-2 h-10 px-5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 hover:text-white transition-all whitespace-nowrap min-w-[120px] text-sm font-semibold tracking-wide"
     >
-      {exporting ? <LoadingSpinner /> : <Download size={18} />}
+      {exporting ? <LoadingSpinner /> : <Download size={16} />}
       Export CSV
     </button>
   );

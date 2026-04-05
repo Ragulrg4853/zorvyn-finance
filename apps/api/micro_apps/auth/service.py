@@ -8,7 +8,10 @@ from fastapi import status
 from shared.models.user import User
 from shared.utils.security import hash_password, verify_password, create_access_token
 from shared.utils.error_taxonomy import AppError, ErrorCode
+from shared.utils.logger import get_logger
 from micro_apps.auth import repository as auth_repo
+
+logger = get_logger(__name__)
 
 
 def register_user(db: Session, username: str, email: str,
@@ -22,14 +25,17 @@ def register_user(db: Session, username: str, email: str,
     Returns: (User, access_token)
     """
     if auth_repo.find_by_username(db, username):
+        logger.warning(f"Registration failed: username '{username}' already exists.", extra={"action": "registration_failed", "reason": "username_taken"})
         raise AppError(code=ErrorCode.AUTH_001, http_status=status.HTTP_400_BAD_REQUEST)
     if auth_repo.find_by_email(db, email):
+        logger.warning(f"Registration failed: email '{email}' already exists.", extra={"action": "registration_failed", "reason": "email_taken"})
         raise AppError(code=ErrorCode.AUTH_002, http_status=status.HTTP_400_BAD_REQUEST)
 
     hashed = hash_password(password)
     user   = auth_repo.create_user(db=db, username=username,
                                    email=email, hashed_password=hashed)
     token  = create_access_token(user_id=str(user.id), role=user.role.value)
+    logger.info(f"User registered successfully: {username}", extra={"action": "user_registered", "user_id": str(user.id)})
     return user, token
 
 
@@ -44,9 +50,12 @@ def authenticate_user(db: Session, username: str,
     """
     user = auth_repo.find_by_username_or_email(db, username)
     if not user or not verify_password(password, user.hashed_password):
+        logger.warning(f"Authentication failed for user '{username}': invalid credentials.", extra={"action": "authentication_failed", "reason": "invalid_credentials"})
         raise AppError(code=ErrorCode.AUTH_003, http_status=status.HTTP_401_UNAUTHORIZED)
     if not user.is_active:
+        logger.warning(f"Authentication failed: account for '{username}' is inactive.", extra={"action": "authentication_failed", "reason": "account_inactive", "user_id": str(user.id)})
         raise AppError(code=ErrorCode.AUTH_004, http_status=status.HTTP_403_FORBIDDEN)
 
     token = create_access_token(user_id=str(user.id), role=user.role.value)
+    logger.info(f"User authenticated successfully: {username}", extra={"action": "user_authenticated", "user_id": str(user.id)})
     return user, token

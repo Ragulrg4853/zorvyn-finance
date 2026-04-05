@@ -25,7 +25,12 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
         auth = request.headers.get("Authorization", "")
         if auth.startswith("Bearer "):
             return f"token:{auth[7:20]}"
-        host = request.client.host if request.client else "unknown"
+        # Respect reverse proxies in deployed environments
+        forwarded_for = request.headers.get("X-Forwarded-For")
+        if forwarded_for:
+            host = forwarded_for.split(",")[0].strip()
+        else:
+            host = request.client.host if request.client else "unknown"
         return f"ip:{host}"
 
     async def dispatch(self, request: Request, call_next):

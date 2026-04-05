@@ -10,35 +10,38 @@ from collections import defaultdict
 from datetime import date
 from typing import Optional
 from sqlalchemy.orm import Session
-from shared.models.transaction import Transaction, TransactionType
+from shared.models.transaction import TransactionType
+from micro_apps.dashboard import repository as dashboard_repo
 
 
 def compute_summary(db: Session, date_from: Optional[date] = None,
                     date_to: Optional[date] = None) -> dict:
     """
-    Returns full dashboard summary in one DB fetch.
-    Metrics computed: total_income, total_expense, net_balance,
-                      total_transactions, monthly_trends (last 12), recent_transactions (last 10).
+    Returns full dashboard summary efficiently.
+    Calculates totals and monthly trends using DB grouping and aggregations.
     """
-    q = db.query(Transaction).filter(Transaction.is_deleted == False)
-    if date_from: q = q.filter(Transaction.date >= date_from)
-    if date_to:   q = q.filter(Transaction.date <= date_to)
-    records = q.all()
-
-    total_income  = 0.0
+    # 1. Calculate overall totals and net balance using DB sum
+    totals_results = dashboard_repo.query_totals(db, date_from, date_to)
+    
+    total_income = 0.0
     total_expense = 0.0
-    monthly: dict = defaultdict(lambda: {"income": 0.0, "expense": 0.0})
-
-    # Single O(n) pass — builds totals and monthly breakdown simultaneously
-    for r in records:
-        amount = float(r.amount)
-        key    = r.date.strftime("%Y-%m")
-        if r.type == TransactionType.income:
-            total_income           += amount
-            monthly[key]["income"] += amount
+    total_transactions = 0
+    
+    for t_type, t_sum, t_count in totals_results:
+        amount = float(t_sum or 0)
+        total_transactions += (t_count or 0)
+        if t_type == TransactionType.income:
+            total_income += amount
         else:
-            total_expense           += amount
-            monthly[key]["expense"] += amount
+            total_expense += amount
+
+    # 2. Calculate monthly trends using DB extract and grouping
+    monthly_results = dashboard_repo.query_monthly_trends(db, date_from, date_to)
+
+    monthly: dict = defaultdict(lambda: {"income": 0.0, "expense": 0.0})
+    for year, month, t_type, t_sum in monthly_results:
+        key = f"{int(year):04d}-{int(month):02d}"
+        monthly[key][t_type.value] += float(t_sum or 0)
 
     monthly_trends = [
         {
@@ -48,16 +51,16 @@ def compute_summary(db: Session, date_from: Optional[date] = None,
             "net":     round(v["income"] - v["expense"], 2),
         }
         for k, v in sorted(monthly.items())
-    ][-12:]  # last 12 months only
+    ][-12:]
 
-    # Recent 10: sort in Python — avoids second DB call
-    recent = sorted(records, key=lambda r: r.date, reverse=True)[:10]
+    # 3. Fetch ONLY the top 10 recent transactions
+    recent = dashboard_repo.query_recent_transactions(db, date_from, date_to, limit=10)
 
     return {
         "total_income":        round(total_income,  2),
         "total_expense":       round(total_expense, 2),
         "net_balance":         round(total_income - total_expense, 2),
-        "total_transactions":  len(records),
+        "total_transactions":  total_transactions,
         "monthly_trends":      monthly_trends,
         "recent_transactions": [
             {"id": str(r.id), "amount": float(r.amount), "type": r.type.value,
@@ -70,31 +73,20 @@ def compute_summary(db: Session, date_from: Optional[date] = None,
 def compute_insights(db: Session, date_from: Optional[date] = None,
                      date_to: Optional[date] = None) -> dict:
     """
-    Returns category-level breakdown for analyst + admin.
-    Single O(n) pass builds income_by_category and expense_by_category simultaneously.
-    Returns top 10 categories per type to avoid overwhelming chart.
+    Returns category-level breakdown using DB aggregations.
     """
-    q = db.query(Transaction).filter(Transaction.is_deleted == False)
-    if date_from: q = q.filter(Transaction.date >= date_from)
-    if date_to:   q = q.filter(Transaction.date <= date_to)
-    records = q.all()
+    results = dashboard_repo.query_insights(db, date_from, date_to)
 
-    income_cats:  dict = defaultdict(float)
-    expense_cats: dict = defaultdict(float)
+    income_cats = []
+    expense_cats = []
 
-    for r in records:
-        if r.type == TransactionType.income:
-            income_cats[r.category]  += float(r.amount)
+    for t_type, cat, t_sum in results:
+        if t_type == TransactionType.income:
+            income_cats.append({"category": cat, "total": float(t_sum or 0)})
         else:
-            expense_cats[r.category] += float(r.amount)
+            expense_cats.append({"category": cat, "total": float(t_sum or 0)})
 
     return {
-        "income_by_category": [
-            {"category": k, "total": round(v, 2)}
-            for k, v in sorted(income_cats.items(), key=lambda x: -x[1])[:10]
-        ],
-        "expense_by_category": [
-            {"category": k, "total": round(v, 2)}
-            for k, v in sorted(expense_cats.items(), key=lambda x: -x[1])[:10]
-        ],
+        "income_by_category": sorted(income_cats, key=lambda x: -x["total"])[:10],
+        "expense_by_category": sorted(expense_cats, key=lambda x: -x["total"])[:10],
     }

@@ -4,17 +4,17 @@ import { motion } from 'framer-motion';
 
 export default function RecentActivity({ transactions, loading }) {
   if (loading) {
-    return <div className="card skeleton h-[400px] rounded-2xl animate-pulse bg-surface/50 border border-border/50" />;
+    return <div className="card skeleton w-full h-full min-h-[400px] rounded-2xl animate-pulse bg-surface/50 border border-border/50" />;
   }
 
   if (!transactions || transactions.length === 0) {
     return (
-      <div className="card bg-gradient-to-br from-surface/80 to-surface/40 backdrop-blur-xl border border-white/5 p-6 rounded-2xl flex items-center justify-center text-gray-500 h-[400px] shadow-xl">
+      <div className="card w-full h-full min-h-[400px] bg-gradient-to-br from-surface/80 to-surface/40 backdrop-blur-xl border border-white/5 p-6 rounded-2xl flex flex-col items-center justify-center text-gray-500 shadow-xl">
         <div className="text-center">
-           <div className="w-12 h-12 rounded-full bg-border inline-flex items-center justify-center mb-3 text-gray-400">
+           <div className="w-12 h-12 rounded-full bg-border inline-flex items-center justify-center mb-3 text-gray-400 shadow-inner">
              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
            </div>
-           <p>No recent activity</p>
+           <p className="font-medium tracking-wide">No recent activity</p>
         </div>
       </div>
     );
@@ -25,18 +25,18 @@ export default function RecentActivity({ transactions, loading }) {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-      className="card p-6 bg-gradient-to-br from-surface/80 to-surface/40 backdrop-blur-xl border border-white/5 rounded-2xl h-[420px] shadow-xl relative overflow-hidden"
+      className="card flex flex-col p-6 bg-gradient-to-br from-surface/80 to-surface/40 backdrop-blur-xl border border-white/5 rounded-2xl w-full h-full shadow-xl relative overflow-hidden"
     >
-      <div className="flex items-center justify-between mb-6 z-10 relative">
+      <div className="flex items-center justify-between mb-4 shrink-0 z-10 relative">
         <h3 className="font-syne text-xl text-white font-bold drop-shadow-sm tracking-tight">Recent Activity</h3>
         <button className="text-xs text-primary/80 hover:text-primary transition-colors font-medium cursor-pointer">View All</button>
       </div>
 
       {/* Fade Top/Bottom for Scroll */}
-      <div className="absolute top-[80px] left-0 right-0 h-8 bg-gradient-to-b from-surface/90 to-transparent z-10 pointer-events-none" />
-      <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-surface/90 to-transparent z-10 pointer-events-none rounded-b-2xl" />
+      <div className="absolute top-[70px] left-0 right-0 h-4 bg-gradient-to-b from-[#0a0f1e]/80 to-transparent z-10 pointer-events-none" />
+      <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#0a0f1e]/90 to-transparent z-10 pointer-events-none rounded-b-2xl" />
 
-      <div className="h-[300px] overflow-y-auto space-y-2 pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+      <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent flex flex-col gap-2 min-h-0">
         {transactions.map((tx, i) => (
           <motion.div 
             initial={{ opacity: 0, y: 10 }}

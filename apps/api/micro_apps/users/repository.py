@@ -36,7 +36,7 @@ def list_users(db: Session, role: Optional[UserRole] = None,
         query = query.filter(User.is_active == is_active)
     
     total = query.count()
-    items = query.order_by(User.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
+    items = query.order_by(User.created_at.desc(), User.id.asc()).offset((page - 1) * page_size).limit(page_size).all()
     return items, total
 
 

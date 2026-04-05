@@ -22,8 +22,8 @@ export function useRoles() {
       setLoading(true);
       setError(null);
       const [rolesRes, permsRes] = await Promise.all([fetchRoles(), fetchPermissions()]);
-      setRoles(rolesRes.data || []);
-      setPermissions(permsRes.data || []);
+      setRoles(rolesRes || []);
+      setPermissions(permsRes || []);
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -52,8 +52,8 @@ export function useRoles() {
     fetchAuditLogsData();
   }, [fetchAuditLogsData]);
 
-  const assignPermissions = async (roleName, permissionNames) => {
-    await apiAssignPermissions(roleName, permissionNames);
+  const assignPermissions = async (roleId, payload) => {
+    await apiAssignPermissions(roleId, payload);
     fetchRolesData(); // refresh roles and permissions
   };
 

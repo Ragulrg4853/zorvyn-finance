@@ -27,6 +27,12 @@ from time import time
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/v1/auth/login")
 
+_TOKEN_BLOCKLIST: set[str] = set()
+
+def block_token(token: str):
+    """"Adds token to a simple in-memory blocklist on logout."""
+    _TOKEN_BLOCKLIST.add(token)
+
 # Default permissions per role — runtime DB override loaded in Session 5
 DEFAULT_PERMISSIONS: dict[str, set[str]] = {
     "viewer": {
@@ -102,6 +108,9 @@ def get_current_user(
     Assumption: Token issued by /v1/auth/login only.
     Raises AUTH_003 for invalid/expired token, AUTH_004 for inactive account.
     """
+    if token in _TOKEN_BLOCKLIST:
+        raise AppError(code=ErrorCode.AUTH_003, http_status=status.HTTP_401_UNAUTHORIZED)
+
     payload = decode_token(token)
     if not payload:
         raise AppError(code=ErrorCode.AUTH_003, http_status=status.HTTP_401_UNAUTHORIZED)

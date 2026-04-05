@@ -2,6 +2,7 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianG
 import { format } from 'date-fns';
 import { formatCurrency } from '@/shared/utils/formatters';
 import { motion } from 'framer-motion';
+import { MouseGlowCard } from '@/shared/components/ui/MouseGlowCard';
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
@@ -27,17 +28,17 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 export default function TrendChart({ data, loading }) {
   if (loading) {
-    return <div className="card w-full h-80 skeleton rounded-2xl animate-pulse bg-surface/50 border border-border/50"></div>;
+    return <div className="card w-full h-full min-h-[300px] skeleton rounded-2xl animate-pulse bg-[var(--color-surface)]/50 border border-white/5"></div>;
   }
 
   if (!data || data.length === 0) {
     return (
-      <div className="card w-full h-80 rounded-2xl flex items-center justify-center text-gray-500 border border-white/5 bg-gradient-to-br from-surface/80 to-surface/40 backdrop-blur-xl">
+      <div className="card w-full h-full min-h-[300px] rounded-2xl flex items-center justify-center text-gray-500 border border-white/5 bg-gradient-to-br from-surface/80 to-surface/40 backdrop-blur-xl">
         <div className="text-center">
-           <div className="w-12 h-12 rounded-full bg-border inline-flex items-center justify-center mb-3 text-gray-400">
+           <div className="w-12 h-12 rounded-full bg-border inline-flex items-center justify-center mb-3 text-gray-400 shadow-inner">
              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3v18h18" /><path d="M18 9l-5 5-4-4-4 4" /></svg>
            </div>
-           <p>No transaction data available</p>
+           <p className="font-medium tracking-wide">No transaction data available</p>
         </div>
       </div>
     );
@@ -48,16 +49,17 @@ export default function TrendChart({ data, loading }) {
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className="card p-6 rounded-2xl w-full border border-white/5 shadow-xl bg-gradient-to-br from-surface/80 to-surface/40 backdrop-blur-xl"
+      className="h-full w-full"
     >
-      <div className="flex items-center justify-between mb-8 z-10 relative">
+      <MouseGlowCard className="p-6 rounded-[var(--radius-card)] w-full h-full flex flex-col bg-gradient-to-br from-[#0c1222]/90 to-[#131a2f]/40 cursor-default ring-1 ring-white/5 hover:ring-[var(--color-primary)]/30 hover:shadow-[0_12px_48px_rgba(0,212,170,0.15)]">
+      <div className="flex items-center justify-between mb-4 shrink-0 z-10 relative">
         <h3 className="text-xl font-syne font-bold tracking-tight text-white drop-shadow-sm">Cash Flow Overview</h3>
         <div className="px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-wider">
            Growth Indicator
         </div>
       </div>
-      <div style={{ width: '100%', height: 320 }} className="z-10 relative">
-        <ResponsiveContainer>
+      <div className="flex-1 min-h-0 w-full z-10 relative">
+        <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
@@ -84,6 +86,7 @@ export default function TrendChart({ data, loading }) {
           </AreaChart>
         </ResponsiveContainer>
       </div>
+      </MouseGlowCard>
     </motion.div>
   );
 }

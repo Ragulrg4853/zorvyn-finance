@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Scale, Activity } from 'lucide-react';
 import { formatCurrency } from '@/shared/utils/formatters';
 import { useCountUp } from '../../../shared/lib/useCountUp';
+import { MouseGlowCard } from '@/shared/components/ui/MouseGlowCard';
 
 const icons = {
   income: <TrendingUp className="text-[var(--color-income)]" size={32} />,
