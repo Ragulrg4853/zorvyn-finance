@@ -17,6 +17,12 @@ export function useAuth() {
   const router = useRouter();
 
   useEffect(() => {
+    if (typeof window !== 'undefined' && !window.__zorvyn_token) {
+      setLoading(false);
+      setUser(null);
+      return;
+    }
+
     AuthService.getCurrentUser()
       .then(setUser)
       .catch(() => setUser(null))

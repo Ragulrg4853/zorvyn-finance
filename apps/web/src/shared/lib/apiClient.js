@@ -36,7 +36,9 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401 && typeof window !== 'undefined') {
       window.__zorvyn_token = null;
-      window.location.href = '/login';
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
     }
     const apiError = error.response?.data?.error || {
       code: 'SYSTEM_001',
