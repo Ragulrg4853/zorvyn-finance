@@ -20,6 +20,9 @@ const MESSAGES = Object.freeze({
 
 export function getErrorMessage(apiError) {
   if (!apiError) return MESSAGES.SYSTEM_001;
+  if (apiError.message === 'Network Error' || apiError.code === 'ERR_NETWORK') {
+    return 'Unable to connect to the server. Please check your network or if the backend is running.';
+  }
   return MESSAGES[apiError.code] || apiError.message || MESSAGES.SYSTEM_001;
 }
 
