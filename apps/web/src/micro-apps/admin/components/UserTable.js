@@ -1,8 +1,16 @@
 import React from 'react';
-import { Pencil, UserX, Search, Shield, User, Users } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Search, Shield, User, Users, AlertCircle, Info, Ban, Edit2 } from 'lucide-react';
+import { format } from 'date-fns';
+import { useAuth } from '../../auth/hooks/useAuth';
+import ErrorState from '../../../shared/components/feedback/ErrorState';
 
-export function UserTable({ users, loading, onEdit, onDeactivate, filters, onFilterChange, meta }) {
+export function UserTable({ users, loading, onEdit, onDeactivate, filters, onFilterChange, meta, error }) {
+  const { user: currentUser } = useAuth();
+
+  if (error) {
+    return <ErrorState message={error} onRetry={() => onFilterChange({ ...filters })} />;
+  }
+
   if (loading && (!users || users.length === 0)) {
     return (
       <div className="h-full flex flex-col w-full overflow-hidden">
@@ -12,7 +20,7 @@ export function UserTable({ users, loading, onEdit, onDeactivate, filters, onFil
         <table className="w-full text-left whitespace-nowrap min-w-[700px]">
           <thead className="bg-[#0c1222] border-b border-[var(--color-border)] text-xs text-gray-400 uppercase font-bold tracking-widest">
             <tr>
-              {['Name', 'Email', 'Role', 'Status', 'Actions'].map(heading => (
+              {['ID', 'Username', 'Email', 'Role', 'Status', 'Created At', 'Actions'].map(heading => (
                 <th key={heading} className="px-6 py-4">{heading}</th>
               ))}
             </tr>
@@ -20,11 +28,13 @@ export function UserTable({ users, loading, onEdit, onDeactivate, filters, onFil
           <tbody className="divide-y divide-[var(--color-border)]">
             {[1, 2, 3, 4, 5].map(i => (
               <tr key={i} className="animate-pulse">
+                <td className="px-6 py-4"><div className="h-4 bg-white/5 rounded w-16"></div></td>
                 <td className="px-6 py-4"><div className="h-4 bg-white/5 rounded w-32"></div></td>
                 <td className="px-6 py-4"><div className="h-4 bg-white/5 rounded w-40"></div></td>
                 <td className="px-6 py-4"><div className="h-6 bg-white/5 rounded-full w-20"></div></td>
                 <td className="px-6 py-4"><div className="h-6 bg-white/5 rounded-full w-16"></div></td>
-                <td className="px-6 py-4"><div className="h-8 bg-white/5 rounded w-24"></div></td>
+                <td className="px-6 py-4"><div className="h-4 bg-white/5 rounded w-24"></div></td>
+                <td className="px-6 py-4"><div className="h-8 bg-white/5 rounded w-32"></div></td>
               </tr>
             ))}
           </tbody>
@@ -63,68 +73,90 @@ export function UserTable({ users, loading, onEdit, onDeactivate, filters, onFil
           <table className="w-full text-left whitespace-nowrap min-w-[800px] border-collapse">
             <thead className="sticky top-0 z-10 bg-[rgba(12,18,34,0.95)] backdrop-blur-xl border-b border-[var(--color-border)] text-[11px] text-gray-400 uppercase tracking-[0.1em] font-syne font-semibold shadow-sm after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[1px] after:bg-white/10">
               <tr>
-                <th className="px-6 py-4">User</th>
+                <th className="px-6 py-4">ID</th>
+                <th className="px-6 py-4">Username</th>
+                <th className="px-6 py-4">Email</th>
                 <th className="px-6 py-4">Role</th>
                 <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">Created At</th>
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5 text-sm text-gray-300">
-              {users?.map((usr, idx) => (
-                <tr 
-                  key={usr.id} 
-                  className="group hover:bg-white/5 transition-all duration-200"
-                  style={{ animationDelay: `${idx * 30}ms`, animationFillMode: 'both' }}
-                >
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center shrink-0">
-                        <User size={16} className="text-indigo-400" />
+              {users?.map((usr, idx) => {
+                const isSelf = currentUser && currentUser.id === usr.id;
+                return (
+                  <tr 
+                    key={usr.id} 
+                    className={`group hover:bg-white/5 transition-all duration-200 ${!usr.is_active ? 'opacity-50' : ''}`}
+                    style={{ animationDelay: `${idx * 30}ms`, animationFillMode: 'both' }}
+                  >
+                    <td className="px-6 py-4 font-mono text-xs text-gray-400" title={usr.id}>
+                      {usr.id.substring(0,8)}...
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center shrink-0">
+                          <User size={14} className="text-indigo-400" />
+                        </div>
+                        <span className="font-semibold text-gray-200">{usr.username || usr.full_name || 'N/A'}</span>
                       </div>
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-gray-200">{usr.full_name || 'N/A'}</span>
-                        <span className="text-xs text-gray-500">{usr.email}</span>
-                      </div>
-                    </div>
-                  </td>
-                  
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-white/5 border border-white/10 text-xs font-semibold capitalize text-gray-300">
-                      {usr.role === 'admin' ? <Shield size={12} className="text-emerald-400" /> : <User size={12} className="text-blue-400" />}
-                      {usr.role}
-                    </span>
-                  </td>
-                  
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex items-center justify-center text-[10px] uppercase font-bold tracking-widest px-3 py-1 rounded-full border ${
-                      usr.is_active 
-                        ? 'bg-green-500/10 text-green-400 border-green-500/20' 
-                        : 'bg-red-500/10 text-red-400 border-red-500/20'
-                    }`}>
-                      {usr.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button 
-                        onClick={() => onEdit(usr)} 
-                        className="h-8 px-3 rounded-md flex items-center justify-center gap-2 bg-white/5 hover:bg-[var(--color-primary)] hover:text-white text-gray-400 transition-all text-xs font-semibold tracking-wide uppercase" 
-                      >
-                        <Pencil size={12} /> Edit
-                      </button>
-                      {usr.is_active && (
-                        <button 
-                          onClick={() => onDeactivate(usr.id)} 
-                          className="h-8 px-3 rounded-md flex items-center justify-center gap-2 bg-white/5 hover:bg-red-500/80 hover:text-white text-gray-400 transition-all text-xs font-semibold tracking-wide uppercase" 
+                    </td>
+                    <td className="px-6 py-4 text-gray-400">
+                      {usr.email}
+                    </td>
+                    
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md border text-xs font-semibold capitalize ${
+                        usr.role === 'admin' ? 'bg-teal-500/10 border-teal-500/20 text-teal-400' :
+                        usr.role === 'analyst' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' :
+                        'bg-gray-500/10 border-gray-500/20 text-gray-400'
+                      }`}>
+                        {usr.role === 'admin' ? <Shield size={12} /> : <User size={12} />}
+                        {usr.role}
+                      </span>
+                    </td>
+                    
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center justify-center text-[10px] uppercase font-bold tracking-widest px-3 py-1 rounded-full border ${
+                        usr.is_active 
+                          ? 'bg-green-500/10 text-green-400 border-green-500/20' 
+                          : 'bg-red-500/10 text-red-400 border-red-500/20'
+                      }`}>
+                        {usr.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+
+                    <td className="px-6 py-4 text-gray-400 font-mono text-xs">
+                       {usr.created_at ? format(new Date(usr.created_at), 'dd MMM yyyy') : 'N/A'}
+                    </td>
+                    
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity" title={isSelf ? "Cannot modify your own account" : ""}>
+                        <select
+                          className="h-8 px-2 rounded-md bg-white/5 border border-white/10 text-gray-300 text-xs font-semibold uppercase tracking-wide focus:outline-none focus:border-[var(--color-primary)] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                          value={usr.role}
+                          disabled={isSelf}
+                          onChange={(e) => onEdit({ ...usr, role: e.target.value })}
                         >
-                          <UserX size={12} /> Deactivate
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                          <option value="viewer" className="bg-[#0c1222]">Viewer</option>
+                          <option value="analyst" className="bg-[#0c1222]">Analyst</option>
+                          <option value="admin" className="bg-[#0c1222]">Admin</option>
+                        </select>
+                        {usr.is_active && (
+                          <button 
+                            onClick={() => onDeactivate(usr.id)} 
+                            disabled={isSelf}
+                            className="h-8 px-3 rounded-md flex items-center justify-center gap-2 bg-white/5 hover:bg-red-500/80 hover:text-white text-gray-400 disabled:opacity-30 disabled:hover:bg-white/5 transition-all text-xs font-semibold tracking-wide uppercase" 
+                          >
+                            <Ban size={12} /> Deactivate
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

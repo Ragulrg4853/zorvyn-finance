@@ -1,7 +1,7 @@
 'use client';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, Wallet, ShieldAlert, LogOut, CodeSquare } from 'lucide-react';
+import { LayoutDashboard, Wallet, LogOut, CodeSquare, Users, Shield, FileText } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Sidebar({ user, onLogout, hasPermission }) {
@@ -10,16 +10,55 @@ export default function Sidebar({ user, onLogout, hasPermission }) {
 
   // Condition links
   const NAV_ITEMS = [
-    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, visible: true },
-    { name: 'Transactions', path: '/transactions', icon: Wallet, visible: true },
-    { 
-      name: 'Administration', 
-      path: '/admin', 
-      icon: ShieldAlert, 
-      // Assumption: either 'admin:access' or checks user role directly
-      visible: hasPermission ? hasPermission('admin:access') : (user?.role === 'admin') 
-    },
-  ].filter(item => item.visible);
+    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, exact: false },
+    { name: 'Transactions', path: '/transactions', icon: Wallet, exact: false },
+  ];
+
+  const isAdmin = hasPermission ? hasPermission('users:manage') : (user?.role === 'admin');
+
+  const ADMIN_ITEMS = isAdmin ? [
+    { name: 'User Management', path: '/admin', icon: Users, exact: true },
+    { name: 'Roles & Permissions', path: '/admin/roles', icon: Shield, exact: false },
+    { name: 'Audit Logs', path: '/admin/audit', icon: FileText, exact: false },
+  ] : [];
+
+  const renderNavItem = (item) => {
+    const isActive = item.exact ? pathname === item.path : pathname.startsWith(item.path);
+    return (
+      <Link key={item.path} href={item.path} passHref>
+        <div 
+          className={`relative group flex items-center px-4 py-3 rounded-lg overflow-hidden transition-all duration-300 font-inter ${
+            isActive 
+              ? 'text-white bg-primary/10 font-semibold' 
+              : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+          }`}
+        >
+          {isActive && (
+            <motion.div 
+              layoutId="active-nav-bg"
+              className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent pointer-events-none"
+              initial={false}
+              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            />
+          )}
+          {/* Active left border indicator */}
+          {isActive && (
+            <motion.div 
+              layoutId="active-nav-indicator"
+              className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-md shadow-[0_0_8px_rgba(var(--color-primary),0.8)]" 
+              initial={false}
+            />
+          )}
+          <item.icon 
+            className={`w-5 h-5 mr-3 shrink-0 transition-transform duration-300 ${
+              isActive ? 'text-primary' : 'text-gray-500 group-hover:text-primary/70 group-hover:scale-110'
+            }`} 
+          />
+          <span className="z-10">{item.name}</span>
+        </div>
+      </Link>
+    );
+  };
 
   return (
     <aside className="w-64 max-w-[16rem] h-full flex flex-col bg-[#111827]/80 backdrop-blur-xl border-r border-primary/20 shrink-0 transition-all z-40 relative">
@@ -34,43 +73,16 @@ export default function Sidebar({ user, onLogout, hasPermission }) {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-8 px-4 flex flex-col gap-2 relative">
-        {NAV_ITEMS.map((item) => {
-          const isActive = pathname.startsWith(item.path);
-          return (
-            <Link key={item.path} href={item.path} passHref>
-              <div 
-                className={`relative group flex items-center px-4 py-3 rounded-lg overflow-hidden transition-all duration-300 font-inter ${
-                  isActive 
-                    ? 'text-white bg-primary/10 font-semibold' 
-                    : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
-                }`}
-              >
-                {isActive && (
-                  <motion.div 
-                    layoutId="active-nav-bg"
-                    className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent pointer-events-none"
-                    initial={false}
-                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                  />
-                )}
-                {/* Active left border indicator */}
-                {isActive && (
-                  <motion.div 
-                    layoutId="active-nav-indicator"
-                    className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-md shadow-[0_0_8px_rgba(var(--color-primary),0.8)]" 
-                    initial={false}
-                  />
-                )}
-                <item.icon 
-                  className={`w-5 h-5 mr-3 shrink-0 transition-transform duration-300 ${
-                    isActive ? 'text-primary' : 'text-gray-500 group-hover:text-primary/70 group-hover:scale-110'
-                  }`} 
-                />
-                <span className="z-10">{item.name}</span>
-              </div>
-            </Link>
-          );
-        })}
+        {NAV_ITEMS.map(renderNavItem)}
+
+        {isAdmin && (
+          <div className="mt-6 mb-2 flex flex-col gap-2 relative">
+            <h3 className="px-4 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+              Administration
+            </h3>
+            {ADMIN_ITEMS.map(renderNavItem)}
+          </div>
+        )}
       </nav>
 
       {/* User Footer Profile */}

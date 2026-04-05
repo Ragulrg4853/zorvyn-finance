@@ -70,15 +70,11 @@ export default function DashboardPage() {
           <div className="flex-1 min-h-0 flex flex-col xl:flex-row gap-4 pb-2">
             
             {/* Left Content (Charts) */}
-            <div className="flex-1 min-w-0 flex flex-col gap-4 overflow-y-auto pr-1 xl:pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
-               <div className="flex-1 min-h-[300px]">
-                  <TrendChart data={summary?.monthly_trends} loading={loading} />
-               </div>
-               <div className="shrink-0 min-h-[320px]">
-                  <CategoryBreakdown 
-                    data={insights} 
-                    loading={loading} 
-                    locked={!hasPermission('dashboard:insights')} 
+              <div className="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto pr-1 xl:pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+                 <div className="min-h-[300px]">
+                   <TrendChart data={summary?.monthly_trends} loading={loading} />
+                 </div>
+                 <div className="min-h-[300px]">
                   />
                </div>
             </div>

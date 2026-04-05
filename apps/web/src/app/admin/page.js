@@ -145,8 +145,7 @@ export default function AdminPage() {
                     loading={auditLoading} 
                     meta={auditMeta} 
                     filters={auditFilters} 
-                    onFilterChange={setAuditFilters} 
-                  />
+                    onFilterChange={setAuditFilters} users={users} />
                 )}
               </motion.div>
             </AnimatePresence>
@@ -157,3 +156,5 @@ export default function AdminPage() {
     </ProtectedRoute>
   );
 }
+
+

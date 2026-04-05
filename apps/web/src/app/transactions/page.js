@@ -83,20 +83,20 @@ export default function TransactionsPage() {
               Transactions
             </h1>
             
-            <div className="flex flex-col xl:flex-row items-end gap-3 w-full md:w-auto">
+            <div className="flex flex-col xl:flex-row flex-wrap items-end gap-3 w-full md:w-auto">
               <TransactionFilters 
                 filters={filters} 
                 onChange={setFilters} 
                 transactions={transactions} 
               />
               
-              <div className="flex items-center gap-3 w-full sm:w-auto mt-2 sm:mt-0 justify-end h-10">
+              <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto mt-2 sm:mt-0 justify-end h-10 shrink-0">
                 {canExport && <ExportButton filters={filters} />}
                 
                 {canWrite && (
                   <button 
                     onClick={handleCreate}
-                    className="btn-primary flex items-center justify-center gap-2 h-10 px-5 border border-[var(--color-primary)] rounded-lg whitespace-nowrap shadow-[0_0_15px_rgba(var(--color-primary-rgb),0.3)] hover:shadow-[0_0_25px_rgba(var(--color-primary-rgb),0.5)] transition-all duration-300 font-medium bg-[var(--color-primary)] text-white"
+                    className="btn-primary flex shrink-0 items-center justify-center gap-2 h-10 px-5 border border-[var(--color-primary)] rounded-lg whitespace-nowrap shadow-[0_0_15px_rgba(var(--color-primary-rgb),0.3)] hover:shadow-[0_0_25px_rgba(var(--color-primary-rgb),0.5)] transition-all duration-300 font-medium bg-[var(--color-primary)] text-white"
                   >
                     <Plus size={18} />
                     New

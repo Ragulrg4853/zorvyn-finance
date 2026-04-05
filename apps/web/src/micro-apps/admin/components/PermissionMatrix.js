@@ -1,37 +1,59 @@
-import React, { useState } from 'react';
-import { Pencil, Save, X, Shield, Lock } from 'lucide-react';
+﻿import React, { useState, useEffect } from 'react';
+import { Lock, Shield, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export function PermissionMatrix({ roles, permissions, onChangePermissions, loading }) {
-  const [editingRole, setEditingRole] = useState(null);
-  const [selectedPermissions, setSelectedPermissions] = useState([]);
+  const [localRoles, setLocalRoles] = useState([]);
 
-  if (loading && (!roles || roles.length === 0)) {
+  useEffect(() => {
+    setLocalRoles(roles || []);
+  }, [roles]);
+
+  if (loading && (!localRoles || localRoles.length === 0)) {
     return (
       <div className="h-full flex flex-col w-full overflow-hidden p-6 gap-4">
-        {[1, 2, 3].map(i => (
+        {[1, 2, 3].map((i) => (
           <div key={i} className="h-16 bg-white/5 rounded-xl skeleton w-full"></div>
         ))}
       </div>
     );
   }
 
-  const handleEdit = (role) => {
-    setEditingRole(role);
-    setSelectedPermissions(role.permissions?.map(p => p.name) || []);
+  const getShortName = (permName) => {
+    const [domain, action] = permName.split(':');
+    let shortDomain = domain;
+    if (domain === 'dashboard') shortDomain = 'Dash';
+    else if (domain === 'transactions') shortDomain = 'Tx';
+    else shortDomain = domain.charAt(0).toUpperCase() + domain.slice(1);
+    
+    const capitalizedAction = action.charAt(0).toUpperCase() + action.slice(1);
+    return \\ \\;
   };
 
-  const handleSave = async (roleId) => {
-    await onChangePermissions(roleId, { permissions: selectedPermissions });
-    setEditingRole(null);
-  };
+  const handleToggle = async (roleId, currRole, perm) => {
+    const isProtectAdminRule = currRole.name === 'admin' && perm.name === 'roles:manage';
+    if (isProtectAdminRule) return;
 
-  const togglePermission = (permName) => {
-    setSelectedPermissions(prev =>
-      prev.includes(permName)
-        ? prev.filter(p => p !== permName)
-        : [...prev, permName]
+    const hasPerm = currRole.permissions?.some((p) => p.id === perm.id);
+    
+    const newPermissions = hasPerm 
+      ? currRole.permissions.filter((p) => p.id !== perm.id)
+      : [...(currRole.permissions || []), perm];
+      
+    const updatedRoles = localRoles.map((r) => 
+      r.id === roleId ? { ...r, permissions: newPermissions } : r
     );
+    setLocalRoles(updatedRoles);
+
+    try {
+      if (hasPerm) {
+        await onChangePermissions(roleId, { revoke: [perm.id] });
+      } else {
+        await onChangePermissions(roleId, { grant: [perm.id] });
+      }
+    } catch (err) {
+      setLocalRoles(roles || []);
+    }
   };
 
   return (
@@ -45,110 +67,60 @@ export function PermissionMatrix({ roles, permissions, onChangePermissions, load
       </div>
       
       <div className="overflow-auto flex-1 relative hide-scrollbars-on-mobile custom-scrollbar p-6">
-        <div className="grid gap-6">
-          {roles?.map((role, idx) => {
-            const isEditing = editingRole?.name === role.name;
-            
-            return (
-              <motion.div 
-                key={role.name}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.1 }}
-                className={`flex flex-col rounded-2xl border transition-all duration-300 overflow-hidden ${
-                  isEditing 
-                    ? 'bg-white/5 border-[var(--color-primary)] shadow-[0_0_30px_rgba(var(--color-primary-rgb),0.15)] ring-1 ring-[var(--color-primary)]' 
-                    : 'bg-[rgba(10,15,30,0.5)] hover:bg-[rgba(15,20,40,0.6)] border-white/10'
-                }`}
-              >
-                {/* Header Line */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-black/20">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${role.name === 'admin' ? 'bg-emerald-500/20' : 'bg-blue-500/20'}`}>
-                      <Shield size={20} className={role.name === 'admin' ? 'text-emerald-400' : 'text-blue-400'} />
-                    </div>
-                    <div>
-                      <h4 className="text-lg font-bold text-gray-200 capitalize tracking-wide">{role.name}</h4>
-                      <p className="text-xs text-gray-500 uppercase tracking-widest">{role.permissions?.length || 0} permissions granted</p>
-                    </div>
-                  </div>
+        <div className="rounded-2xl border border-[var(--color-border)] bg-[rgba(10,15,30,0.5)] overflow-x-auto backdrop-blur-sm shadow-xl">
+          <table className="w-full text-left whitespace-nowrap border-collapse min-w-max">
+            <thead className="bg-[#0c1222] border-b border-white/10 text-[10px] text-gray-400 uppercase tracking-widest font-syne font-semibold shadow-sm">
+              <tr>
+                <th className="px-6 py-4 sticky left-0 z-10 bg-[#0c1222] border-r border-[#1a2235]">Role</th>
+                {permissions?.map((perm) => (
+                  <th key={perm.id} className="px-4 py-4 text-center">
+                    {getShortName(perm.name)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5 text-sm text-gray-300">
+              {localRoles?.map((role) => (
+                <tr key={role.id} className="group hover:bg-white/5 transition-all duration-200">
+                  <td className="px-6 py-4 sticky left-0 z-10 bg-[#0d1222] group-hover:bg-[#151b2b] border-r border-[#1a2235] transition-colors">
+                     <div className="flex items-center gap-3">
+                        <div className={\w-8 h-8 rounded-full flex items-center justify-center border border-white/10 shrink-0 \\}>
+                          {role.name === 'admin' ? <Shield size={14} /> : <User size={14} />}
+                        </div>
+                        <span className="font-bold text-gray-200 capitalize tracking-wide">{role.name}</span>
+                     </div>
+                  </td>
                   
-                  <div>
-                    {isEditing ? (
-                      <div className="flex items-center gap-2">
-                        <button 
-                          onClick={() => setEditingRole(null)} 
-                          className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors flex items-center gap-2"
-                        >
-                          <X size={14} /> Cancel
-                        </button>
-                        <button 
-                          onClick={() => handleSave(role.id)} 
-                          className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-white bg-[var(--color-primary)] hover:bg-[var(--color-primary-light)] rounded-lg transition-all shadow-[0_0_15px_rgba(var(--color-primary-rgb),0.4)] flex items-center gap-2"
-                        >
-                          <Save size={14} /> Save
-                        </button>
-                      </div>
-                    ) : (
-                      <button 
-                        onClick={() => handleEdit(role)} 
-                        className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-[var(--color-primary)] hover:text-white border border-[var(--color-primary)] hover:bg-[var(--color-primary)] rounded-lg transition-all flex items-center gap-2"
-                      >
-                        <Pencil size={14} /> Edit Role
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Permissions Grid */}
-                <div className="px-6 py-5">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-6">
-                    {permissions?.map(perm => {
-                      const hasPermission = isEditing 
-                        ? selectedPermissions.includes(perm.name) 
-                        : role.permissions?.some(rp => rp.name === perm.name);
-
-                      return (
+                  {permissions?.map((perm) => {
+                    const hasPerm = role.permissions?.some((p) => p.id === perm.id);
+                    const isProtected = role.name === 'admin' && perm.name === 'roles:manage';
+                    
+                    return (
+                      <td key={perm.id} className="px-4 py-4 text-center border-l border-white/5">
                         <label 
-                          key={perm.name} 
-                          className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
-                            isEditing ? 'cursor-pointer hover:bg-white/5' : 'cursor-default opacity-80'
-                          } ${
-                            hasPermission 
-                              ? 'bg-[var(--color-primary-muted)] border-[var(--color-primary)]' 
-                              : 'bg-black/20 border-white/5'
-                          }`}
+                          className={\inline-flex relative items-center justify-center w-5 h-5 rounded border \ \ transition-colors\}
+                          title={isProtected ? "Admin must retain roles manage permission" : ""}
                         >
-                          <div className={`relative flex items-center justify-center w-5 h-5 rounded border ${
-                            hasPermission ? 'bg-[var(--color-primary)] border-[var(--color-primary)]' : 'bg-transparent border-gray-600'
-                          } ${isEditing ? 'transition-colors' : ''}`}>
-                            <input
-                              type="checkbox"
-                              checked={hasPermission}
-                              disabled={!isEditing}
-                              onChange={() => togglePermission(perm.name)}
-                              className="absolute opacity-0 w-full h-full cursor-pointer disabled:cursor-default"
-                            />
-                            {hasPermission && (
-                              <motion.svg initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-3 h-3 text-white pointer-events-none" viewBox="0 0 14 14" fill="none">
-                                <path d="M3 8L6 11L11 3.5" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" stroke="currentColor" />
-                              </motion.svg>
-                            )}
-                          </div>
-                          
-                          <div className="flex flex-col">
-                            <span className={`text-sm font-semibold ${hasPermission ? 'text-white' : 'text-gray-400'}`}>
-                              {perm.name.split(':').join(' : ')}
-                            </span>
-                          </div>
+                          <input
+                            type="checkbox"
+                            checked={hasPerm || false}
+                            disabled={isProtected}
+                            onChange={() => handleToggle(role.id, role, perm)}
+                            className="absolute opacity-0 w-full h-full cursor-pointer disabled:cursor-not-allowed"
+                          />
+                          {hasPerm && (
+                            <motion.svg initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-3 h-3 text-white pointer-events-none" viewBox="0 0 14 14" fill="none">
+                               <path d="M3 8L6 11L11 3.5" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" stroke="currentColor" />
+                            </motion.svg>
+                          )}
                         </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

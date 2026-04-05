@@ -22,7 +22,7 @@ export default function TransactionTable({
           <table className="w-full text-left whitespace-nowrap min-w-[700px]">
             <thead className="sticky top-0 z-10 bg-[#0c1222] border-b border-[var(--color-border)] text-xs text-gray-400 uppercase font-bold tracking-widest backdrop-blur-md">
               <tr>
-                {['Date', 'Category', 'Type', 'Amount', 'Notes', ...(canWrite ? ['Actions'] : [])].map(heading => (
+                {['Date', 'Type', 'Category', 'Amount', 'Notes', ...(canWrite ? ['Actions'] : [])].map(heading => (
                   <th key={heading} className="px-6 py-4">{heading}</th>
                 ))}
               </tr>
@@ -31,8 +31,8 @@ export default function TransactionTable({
               {[1, 2, 3, 4, 5, 6, 7].map(i => (
                 <tr key={i} className="animate-pulse transition-colors">
                   <td className="px-6 py-4"><div className="h-4 bg-white/5 rounded w-24"></div></td>
-                  <td className="px-6 py-4"><div className="h-4 bg-white/5 rounded w-20"></div></td>
                   <td className="px-6 py-4"><div className="h-6 bg-white/5 rounded-full w-16"></div></td>
+                  <td className="px-6 py-4"><div className="h-4 bg-white/5 rounded w-20"></div></td>
                   <td className="px-6 py-4"><div className="h-4 bg-white/5 rounded w-20"></div></td>
                   <td className="px-6 py-4"><div className="h-4 bg-white/5 rounded w-32"></div></td>
                   {canWrite && <td className="px-6 py-4"><div className="h-6 bg-white/5 rounded w-12 ml-auto"></div></td>}
@@ -89,8 +89,8 @@ export default function TransactionTable({
           <thead className="sticky top-0 z-20 bg-[rgba(12,18,34,0.95)] backdrop-blur-xl border-b border-[var(--color-border)] text-[11px] text-gray-400 uppercase tracking-[0.1em] font-syne font-semibold shadow-sm after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[1px] after:bg-white/10">
             <tr>
               <SortableHeader field="date" label="Date" />
-              <SortableHeader field="category" label="Category" />
               <th className="px-6 py-4">Type</th>
+              <SortableHeader field="category" label="Category" />
               <SortableHeader field="amount" label="Amount" />
               <th className="px-6 py-4">Notes</th>
               {canWrite && <th className="px-6 py-4 text-right">Actions</th>}
@@ -107,12 +107,6 @@ export default function TransactionTable({
                 <td className="px-6 py-4 font-mono text-gray-400 group-hover:text-gray-200 transition-colors">
                   {format(new Date(tx.date), 'MMM dd, yyyy')}
                 </td>
-                <td className="px-6 py-4 text-sm capitalize font-medium text-gray-300">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full border border-white/20" />
-                    {tx.category}
-                  </div>
-                </td>
                 <td className="px-6 py-4">
                   <span className={`inline-flex items-center justify-center text-[10px] uppercase font-bold tracking-widest px-3 py-1 rounded-full border ${
                     tx.type === 'income' 
@@ -121,6 +115,12 @@ export default function TransactionTable({
                   }`}>
                     {tx.type}
                   </span>
+                </td>
+                <td className="px-6 py-4 text-sm capitalize font-medium text-gray-300">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full border border-white/20" />
+                    {tx.category}
+                  </div>
                 </td>
                 <td className={`px-6 py-4 font-semibold font-syne text-[15px] ${
                   tx.type === 'income' ? 'text-[var(--color-income)]' : 'text-[var(--color-expense)]'
