@@ -28,27 +28,46 @@ from shared.models.user import User, UserRole
 
 def list_users(db: Session, role: Optional[UserRole] = None,
                is_active: Optional[bool] = None,
-               page: int = 1, page_size: int = 20) -> tuple[list, int]:
-    # TODO(session-4): implement per docstring above
-    raise NotImplementedError
+               page: int = 1, page_size: int = 20) -> tuple[list[User], int]:
+    query = db.query(User)
+    if role:
+        query = query.filter(User.role == role)
+    if is_active is not None:
+        query = query.filter(User.is_active == is_active)
+    
+    total = query.count()
+    items = query.order_by(User.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
+    return items, total
 
 
 def get_by_id(db: Session, user_id: UUID) -> Optional[User]:
-    # TODO(session-4): db.query(User).filter(User.id == user_id).first()
-    raise NotImplementedError
+    return db.query(User).filter(User.id == user_id).first()
 
 
 def create_user(db: Session, username: str, email: str,
                 hashed_password: str, role: UserRole) -> User:
-    # TODO(session-4): Instantiate User, db.add, db.commit, db.refresh, return
-    raise NotImplementedError
+    user = User(
+        username=username,
+        email=email,
+        hashed_password=hashed_password,
+        role=role,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
 
 
 def update_user(db: Session, user: User, updates: dict) -> User:
-    # TODO(session-4): for k,v in updates.items(): setattr(user,k,v); commit; refresh
-    raise NotImplementedError
+    for k, v in updates.items():
+        setattr(user, k, v)
+    db.commit()
+    db.refresh(user)
+    return user
 
 
 def deactivate_user(db: Session, user: User) -> User:
-    # TODO(session-4): user.is_active = False; db.commit(); return user
-    raise NotImplementedError
+    user.is_active = False
+    db.commit()
+    db.refresh(user)
+    return user

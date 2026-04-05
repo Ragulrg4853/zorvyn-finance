@@ -1,6 +1,10 @@
 # Zorvyn Finance
 ## Production-Grade Finance Data Processing & Access Control Platform
 
+> **Live Demo:**
+> Frontend: [https://zorvyn-finance.vercel.app](https://zorvyn-finance.vercel.app)
+> Backend API: [https://zorvyn-api.railway.app/docs](https://zorvyn-api.railway.app/docs)
+
 > **GitHub Copilot:** Read this entire file before writing any code.
 > Then read CLAUDE.md, AGENTS.md, and COPILOT_GUIDE.md in that order.
 

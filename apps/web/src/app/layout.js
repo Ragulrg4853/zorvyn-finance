@@ -19,7 +19,13 @@ export default function RootLayout({ children }) {
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased bg-[#0a0f1e] text-gray-200 selection:bg-primary/30 min-h-screen relative overflow-x-hidden">
+        {/* Ambient Neon Blobs */}
+        <div className="fixed top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/10 blur-[150px] pointer-events-none -z-10 mix-blend-screen" />
+        <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-500/10 blur-[150px] pointer-events-none -z-10 mix-blend-screen" />
+        
+        {children}
+      </body>
     </html>
   );
 }

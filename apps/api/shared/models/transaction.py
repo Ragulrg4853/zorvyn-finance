@@ -5,7 +5,7 @@ Soft delete: is_deleted=True replaces hard DELETE everywhere — never use db.de
 """
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import Column, String, Numeric, Boolean, DateTime, Date, Text
+from sqlalchemy import Column, String, Numeric, Boolean, DateTime, Date, Text, CheckConstraint
 from sqlalchemy import Enum as SAEnum, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
@@ -20,6 +20,9 @@ class TransactionType(str, enum.Enum):
 
 class Transaction(Base):
     __tablename__ = "transactions"
+    __table_args__ = (
+        CheckConstraint("amount > 0", name="chk_amount_positive"),
+    )
 
     id         = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     amount     = Column(Numeric(12, 2), nullable=False)

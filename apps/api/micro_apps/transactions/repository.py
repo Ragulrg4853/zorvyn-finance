@@ -56,6 +56,28 @@ def list_filtered(db: Session, txn_type=None, category=None, date_from=None,
     return items, total
 
 
+def stream_filtered(db: Session, txn_type=None, category=None, date_from=None,
+                    date_to=None, search=None, sort="date", order="desc"):
+    """
+    Returns an ORM query generator for O(1) space streaming export.
+    Constitution: O(1) space complexity on huge datasets.
+    """
+    q = db.query(Transaction).filter(Transaction.is_deleted == False)
+    if txn_type:    q = q.filter(Transaction.type == txn_type)
+    if category:    q = q.filter(Transaction.category.ilike(f"%{category}%"))
+    if date_from:   q = q.filter(Transaction.date >= date_from)
+    if date_to:     q = q.filter(Transaction.date <= date_to)
+    if search:
+        q = q.filter(
+            Transaction.notes.ilike(f"%{search}%") |
+            Transaction.category.ilike(f"%{search}%")
+        )
+    sort_col = getattr(Transaction, sort, Transaction.date)
+    q = q.order_by(sort_col.desc() if order == "desc" else sort_col.asc())
+    # yield_per sets the stream fetch size (driver support required, e.g. asyncpg/psycopg2)
+    return q.yield_per(1000)
+
+
 def soft_delete(db: Session, transaction: Transaction) -> Transaction:
     """Sets is_deleted=True. NEVER hard-deletes. Constitution: CLAUDE.md #9."""
     transaction.is_deleted = True

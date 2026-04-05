@@ -14,11 +14,16 @@ from uuid import UUID
 from fastapi import Depends, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 
 from shared.database import get_db
 from shared.models.user import User
 from shared.utils.security import decode_token
 from shared.utils.error_taxonomy import AppError, ErrorCode
+
+from datetime import datetime, timedelta
+from time import time
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/v1/auth/login")
 
@@ -48,6 +53,45 @@ DEFAULT_PERMISSIONS: dict[str, set[str]] = {
     },
 }
 
+_PERMISSIONS_CACHE: dict[str, tuple[set[str], float]] = {}
+_CACHE_TTL_SECONDS = 300  # 5 minutes
+
+def invalidate_permission_cache(user_id: str = None):
+    if user_id:
+        _PERMISSIONS_CACHE.pop(user_id, None)
+    else:
+        _PERMISSIONS_CACHE.clear()
+
+def fetch_permissions_from_db(db: Session, role_name: str) -> set[str]:
+    try:
+        query = text("""
+            SELECT p.name 
+            FROM permissions p
+            JOIN role_permissions rp ON p.id = rp.permission_id
+            JOIN roles r ON r.id = rp.role_id
+            WHERE r.name = :role_name
+        """)
+        result = db.execute(query, {"role_name": role_name}).fetchall()
+        if result:
+            return {row[0] for row in result}
+        return DEFAULT_PERMISSIONS.get(role_name, set())
+    except SQLAlchemyError:
+        db.rollback()
+        return DEFAULT_PERMISSIONS.get(role_name, set())
+
+def get_cached_permissions(user_id: str, role: str, db: Session) -> set[str]:
+    """Returns cached permissions or fetches from DB. TTL = 5 minutes.
+    Assumption: admin permission changes take up to 5min to propagate.
+    """
+    now = time()
+    if user_id in _PERMISSIONS_CACHE:
+        perms, expires_at = _PERMISSIONS_CACHE[user_id]
+        if now < expires_at:
+            return perms
+    # Cache miss or expired — query DB
+    perms = fetch_permissions_from_db(db, role)
+    _PERMISSIONS_CACHE[user_id] = (perms, now + _CACHE_TTL_SECONDS)
+    return perms
 
 def get_current_user(
     token: str = Depends(oauth2_scheme),
@@ -75,13 +119,17 @@ def require_permission(permission: str):
     Dependency factory: enforces a specific permission string.
     Convention: always "resource:action" format.
     Never checks role name — checks permission string only.
-
-    TODO(session-5): Load permissions from DB role_permissions table.
-    Currently falls back to DEFAULT_PERMISSIONS dict.
     """
-    def _check(current_user: User = Depends(get_current_user)) -> User:
-        allowed = DEFAULT_PERMISSIONS.get(current_user.role.value, set())
+    def _check(
+        current_user: User = Depends(get_current_user),
+        db: Session = Depends(get_db)
+    ) -> User:
+        role_name = current_user.role.value if hasattr(current_user.role, "value") else current_user.role
+        
+        allowed = get_cached_permissions(str(current_user.id), role_name, db)
+
         if permission not in allowed:
             raise AppError(code=ErrorCode.RBAC_001, http_status=status.HTTP_403_FORBIDDEN)
         return current_user
+
     return _check

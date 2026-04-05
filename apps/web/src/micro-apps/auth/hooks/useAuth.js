@@ -1,5 +1,5 @@
 /**
- * useAuth — authentication state. Single source of truth.
+ * useAuth â€” authentication state. Single source of truth.
  * Constitution: CLAUDE.md #66 (hook manages state), #67 (all 3 async states)
  * Copilot Session 10: implement full body per COPILOT_GUIDE.md Session 10.
  */
@@ -24,13 +24,19 @@ export function useAuth() {
   }, []);
 
   const login = useCallback(async (username, password) => {
+    setLoading(true);
     setError(null);
     try {
       await AuthService.login(username, password);
       const currentUser = await AuthService.getCurrentUser();
       setUser(currentUser);
       router.push(ROUTES.DASHBOARD);
-    } catch (err) { setError(getErrorMessage(err)); }
+    } catch (err) {
+      setError(getErrorMessage(err));
+      throw err;
+    } finally {
+      setLoading(false);
+    }
   }, [router]);
 
   const logout = useCallback(async () => {

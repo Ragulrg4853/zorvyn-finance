@@ -51,9 +51,18 @@ app = FastAPI(
 # Middleware — outer runs first on request, last on response
 app.add_middleware(CorrelationIdMiddleware)
 app.add_middleware(RateLimiterMiddleware)
+import os
+
+frontend_origins = [
+    "http://localhost:3000",
+    "https://zorvyn-finance.vercel.app"
+]
+if os.getenv("FRONTEND_URL"):
+    frontend_origins.append(os.getenv("FRONTEND_URL"))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=frontend_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

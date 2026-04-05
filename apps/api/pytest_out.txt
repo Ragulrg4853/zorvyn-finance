@@ -1,0 +1,14 @@
+============================= test session starts =============================
+platform win32 -- Python 3.10.0, pytest-8.2.0, pluggy-1.6.0 -- c:\Users\girit\OneDrive\Documents\zorvyn-fintech\zorvyn-finance\zorvyn-finance\apps\api\venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: c:\Users\girit\OneDrive\Documents\zorvyn-fintech\zorvyn-finance\zorvyn-finance\apps\api
+plugins: anyio-4.13.0, asyncio-0.23.6
+asyncio: mode=strict
+collecting ... collected 4 items
+
+micro_apps/transactions/tests/test_service.py::TestCreateTransaction::test_should_reject_amount_of_zero PASSED [ 25%]
+micro_apps/transactions/tests/test_service.py::TestCreateTransaction::test_should_reject_negative_amount PASSED [ 50%]
+micro_apps/transactions/tests/test_service.py::TestGetTransaction::test_should_raise_finance001_when_transaction_not_found PASSED [ 75%]
+micro_apps/transactions/tests/test_service.py::TestDeleteTransaction::test_should_raise_finance001_when_deleting_nonexistent_transaction PASSED [100%]
+
+============================== 4 passed in 0.04s ==============================

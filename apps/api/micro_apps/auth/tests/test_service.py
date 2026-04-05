@@ -61,7 +61,7 @@ class TestAuthenticateUser:
         # Arrange
         db        = MagicMock()
         mock_user = MagicMock(is_active=True, role=MagicMock(value="viewer"))
-        with patch("micro_apps.auth.service.auth_repo.find_by_username", return_value=mock_user), \
+        with patch("micro_apps.auth.service.auth_repo.find_by_username_or_email", return_value=mock_user), \
              patch("micro_apps.auth.service.verify_password",             return_value=True), \
              patch("micro_apps.auth.service.create_access_token",         return_value="valid"):
             # Act
@@ -72,7 +72,7 @@ class TestAuthenticateUser:
     def test_should_raise_auth003_when_user_not_found(self):
         # Arrange
         db = MagicMock()
-        with patch("micro_apps.auth.service.auth_repo.find_by_username", return_value=None):
+        with patch("micro_apps.auth.service.auth_repo.find_by_username_or_email", return_value=None):
             # Act + Assert
             with pytest.raises(AppError) as exc:
                 auth_service.authenticate_user(db, "nobody", "pass1234")
@@ -81,7 +81,7 @@ class TestAuthenticateUser:
     def test_should_raise_auth003_when_password_is_wrong(self):
         # Arrange
         db = MagicMock()
-        with patch("micro_apps.auth.service.auth_repo.find_by_username", return_value=MagicMock()), \
+        with patch("micro_apps.auth.service.auth_repo.find_by_username_or_email", return_value=MagicMock()), \
              patch("micro_apps.auth.service.verify_password",             return_value=False):
             # Act + Assert
             with pytest.raises(AppError) as exc:
@@ -92,7 +92,7 @@ class TestAuthenticateUser:
         # Arrange
         db            = MagicMock()
         inactive_user = MagicMock(is_active=False)
-        with patch("micro_apps.auth.service.auth_repo.find_by_username", return_value=inactive_user), \
+        with patch("micro_apps.auth.service.auth_repo.find_by_username_or_email", return_value=inactive_user), \
              patch("micro_apps.auth.service.verify_password",             return_value=True):
             # Act + Assert
             with pytest.raises(AppError) as exc:

@@ -42,7 +42,7 @@ def authenticate_user(db: Session, username: str,
       2. Account must be active                 -> AUTH_004
     Returns: (User, access_token)
     """
-    user = auth_repo.find_by_username(db, username)
+    user = auth_repo.find_by_username_or_email(db, username)
     if not user or not verify_password(password, user.hashed_password):
         raise AppError(code=ErrorCode.AUTH_003, http_status=status.HTTP_401_UNAUTHORIZED)
     if not user.is_active:

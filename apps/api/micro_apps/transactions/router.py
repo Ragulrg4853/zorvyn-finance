@@ -32,13 +32,13 @@ def export_transactions(
     _: User = Depends(require_permission("transactions:export")),
 ):
     """Streams CSV download. Analyst and admin only."""
-    csv_content = txn_service.export_transactions_csv(
-        db=db, txn_type=txn_type, category=category,
-        date_from=date_from, date_to=date_to, search=search,
-    )
     return StreamingResponse(
-        iter([csv_content]), media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=transactions.csv"},
+        txn_service.stream_transactions_csv(
+            db=db, txn_type=txn_type, category=category,
+            date_from=date_from, date_to=date_to, search=search,
+        ),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=transactions.csv"}
     )
 
 

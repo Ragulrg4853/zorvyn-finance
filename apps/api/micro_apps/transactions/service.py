@@ -62,15 +62,10 @@ def delete_transaction(db: Session, transaction_id: UUID) -> None:
     txn_repo.soft_delete(db, record)
 
 
-def export_transactions_csv(db: Session, **filters) -> str:
-    """Exports filtered transactions as CSV string (no pagination — full export)."""
-    items, _ = txn_repo.list_filtered(db=db, page=1, page_size=10000, **filters)
-    output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow(["id", "date", "type", "category", "amount", "notes"])
-    for item in items:
-        writer.writerow([
-            item.id, item.date, item.type.value,
-            item.category, item.amount, item.notes or "",
-        ])
-    return output.getvalue()
+def stream_transactions_csv(db: Session, **filters):
+    """Generator: yields CSV rows one at a time. O(1) space — never loads all rows."""
+    yield "id,date,type,category,amount,notes\n"
+    q = txn_repo.stream_filtered(db=db, **filters)
+    for row in q.enable_eagerloads(False):
+        notes = (row.notes or "").replace(",", ";")
+        yield f"{row.id},{row.date},{row.type.value},{row.category},{row.amount},{notes}\n"
