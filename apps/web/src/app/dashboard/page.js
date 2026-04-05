@@ -75,9 +75,13 @@ export default function DashboardPage() {
                    <TrendChart data={summary?.monthly_trends} loading={loading} />
                  </div>
                  <div className="min-h-[300px]">
-                  />
-               </div>
-            </div>
+                    <CategoryBreakdown 
+                      data={insights} 
+                      loading={loading} 
+                      locked={!hasPermission('dashboard:insights')} 
+                    />
+                 </div>
+              </div>
 
             {/* Right Content (Activity) */}
             <div className="w-full xl:w-[380px] 2xl:w-[420px] shrink-0 h-[400px] xl:h-full flex flex-col min-h-0">
