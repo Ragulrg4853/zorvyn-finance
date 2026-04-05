@@ -1,10 +1,12 @@
 ﻿'use client';
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Search, Activity } from 'lucide-react';
+import { Bell, Search, Activity, Wallet } from 'lucide-react';
 import { useAuth } from '../../../micro-apps/auth/hooks/useAuth';
 import apiClient from '../../lib/apiClient';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, format } from 'date-fns';
+import { useRouter } from 'next/navigation';
+import { formatCurrency } from '@/shared/utils/formatters';
 
 export default function Topbar({ title, user }) {
   const { hasPermission } = useAuth();
@@ -13,6 +15,14 @@ export default function Topbar({ title, user }) {
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef(null);
 
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const searchRef = useRef(null);
+  const router = useRouter();
+
   const canReadAudit = hasPermission('audit:read');
 
   useEffect(() => {
@@ -20,9 +30,23 @@ export default function Topbar({ title, user }) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
       }
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setShowSearchDropdown(false);
+      }
     };
+    
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        setShowSearchDropdown(false);
+      }
+    };
+    
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
   }, []);
 
   useEffect(() => {
@@ -37,8 +61,36 @@ export default function Topbar({ title, user }) {
     }
   }, [canReadAudit]);
 
+  // Debounced search
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setShowSearchDropdown(false);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setIsSearching(true);
+      apiClient.get('/v1/transactions', { params: { search: searchQuery, page_size: 5 } })
+        .then((res) => {
+          setSearchResults(res.data?.data || []);
+          setShowSearchDropdown(true);
+        })
+        .catch(err => console.error("Search error:", err))
+        .finally(() => setIsSearching(false));
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const toggleDropdown = () => {
     setIsDropdownOpen((prev) => !prev);
+  };
+
+  const handleSearchResultClick = (query) => {
+    setShowSearchDropdown(false);
+    setSearchQuery('');
+    router.push(`/transactions?search=${encodeURIComponent(query)}`);
   };
 
   return (
@@ -60,11 +112,85 @@ export default function Topbar({ title, user }) {
       {/* Right Section: Utilities */}
       <div className="flex items-center gap-6">
         
-        {/* Subtle Global Search Placeholder */}
-        <div className="hidden lg:flex items-center bg-[#111827] border border-white/5 rounded-full px-4 py-2 hover:border-[var(--color-primary)]/50 transition-colors group cursor-text">
-          <Search className="w-4 h-4 text-gray-500 mr-2 group-hover:text-[var(--color-primary)] transition-colors" />
-          <span className="text-sm text-gray-500 group-hover:text-gray-300 font-inter">Search everywhere...</span>
-          <div className="ml-4 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold bg-white/5 text-gray-400">⌘K</div>
+        {/* Global Search functionality */}
+        <div className="hidden lg:flex items-center relative z-50 shrink-0" ref={searchRef}>
+          <div className={`flex flex-row items-center bg-[#111827] border rounded-full px-4 py-2 transition-colors ${showSearchDropdown ? 'border-[var(--color-primary)]/50 box-shadow-[0_0_15px_rgba(0,212,170,0.1)]' : 'border-white/5 hover:border-white/10'}`}>
+            <Search className={`w-4 h-4 mr-2 shrink-0 transition-colors ${showSearchDropdown ? 'text-[var(--color-primary)]' : 'text-gray-500'}`} />
+            <input 
+              type="text"
+              placeholder="Search everywhere..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => { if (searchQuery.trim()) setShowSearchDropdown(true); }}
+              className="bg-transparent border-none text-sm text-white placeholder-gray-500 focus:outline-none w-48 transition-all"
+            />
+            {isSearching && (
+               <div className="ml-2 shrink-0 w-3 h-3 rounded-full border-2 border-[var(--color-primary)] border-t-transparent animate-spin"></div>
+            )}
+            {!searchQuery && !isSearching && (
+              <div className="ml-2 px-1.5 py-0.5 rounded text-[10px] bg-white/5 text-gray-500 font-medium tracking-wider select-none shrink-0 pointer-events-none">
+                {'\u2318'}K
+              </div>
+            )}
+          </div>
+
+          <AnimatePresence>
+            {showSearchDropdown && (
+              <motion.div
+                initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.98 }}
+                transition={{ duration: 0.15 }}
+                className="absolute top-12 right-0 w-80 bg-[rgba(15,20,35,0.98)] backdrop-blur-2xl border border-[var(--color-border)] rounded-2xl shadow-2xl overflow-hidden mt-2 z-50"
+              >
+                <div className="px-4 py-2 bg-black/20 border-b border-white/5 flex items-center justify-between">
+                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Transactions</span>
+                  {searchResults.length > 0 && (
+                    <span className="text-[10px] text-gray-500">{searchResults.length} results</span>
+                  )}
+                </div>
+                
+                <ul className="max-h-[300px] overflow-y-auto custom-scrollbar">
+                  {searchResults.length > 0 ? (
+                    searchResults.map((tx) => (
+                      <li key={tx.id}>
+                        <button 
+                          onClick={() => handleSearchResultClick(searchQuery)}
+                          className="w-full text-left px-4 py-3 hover:bg-white/5 transition-colors flex items-center justify-between group border-b border-white/5 last:border-b-0"
+                        >
+                          <div className="flex items-center gap-3 overflow-hidden">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border ${tx.type === 'income' ? 'bg-green-500/10 border-green-500/20 text-green-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
+                              <Wallet size={14} />
+                            </div>
+                            <div className="flex flex-col overflow-hidden">
+                              <span className="text-sm font-medium text-gray-200 capitalize truncate">{tx.category}</span>
+                              <span className="text-[10px] text-gray-500 font-mono mt-0.5">{format(new Date(tx.date), 'MMM dd, yyyy')}</span>
+                            </div>
+                          </div>
+                          <span className={`font-bold font-syne text-sm shrink-0 pl-2 ${tx.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>
+                             {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount)}
+                          </span>
+                        </button>
+                      </li>
+                    ))
+                  ) : (
+                    <li className="px-4 py-8 text-center flex flex-col items-center">
+                       <Search className="text-gray-600 mb-2" size={24} />
+                       <span className="text-sm text-gray-400 font-medium">No results found for "{searchQuery}"</span>
+                    </li>
+                  )}
+                </ul>
+                
+                {searchResults.length > 0 && (
+                  <div className="p-2 border-t border-white/5 bg-black/20 text-center shrink-0">
+                     <button onClick={() => handleSearchResultClick(searchQuery)} className="text-xs text-[var(--color-primary)] hover:text-white font-semibold uppercase tracking-wider transition-colors py-1 px-4 w-full">
+                       View all results
+                     </button>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Notifications Dropdown */}

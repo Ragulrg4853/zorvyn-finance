@@ -17,13 +17,23 @@ export default function Sidebar({ user, onLogout, hasPermission }) {
   const isAdmin = hasPermission ? hasPermission('users:manage') : (user?.role === 'admin');
 
   const ADMIN_ITEMS = isAdmin ? [
-    { name: 'User Management', path: '/admin', icon: Users, exact: true },
-    { name: 'Roles & Permissions', path: '/admin/roles', icon: Shield, exact: false },
-    { name: 'Audit Logs', path: '/admin/audit', icon: FileText, exact: false },
+    { name: 'User Management', path: '/admin?tab=users', act: 'users', icon: Users },
+    { name: 'Roles & Permissions', path: '/admin?tab=roles', act: 'roles', icon: Shield },
+    { name: 'Audit Logs', path: '/admin?tab=audit', act: 'audit', icon: FileText },
   ] : [];
 
   const renderNavItem = (item) => {
-    const isActive = item.exact ? pathname === item.path : pathname.startsWith(item.path);
+    // If it's an admin tab link, we need to check the query param
+    const isTabItem = !!item.act;
+    const currentTab = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') || 'users' : 'users';
+    
+    let isActive;
+    if (isTabItem) {
+      isActive = pathname === '/admin' && currentTab === item.act;
+    } else {
+      isActive = item.exact ? pathname === item.path : pathname.startsWith(item.path);
+    }
+
     return (
       <Link key={item.path} href={item.path} passHref>
         <div 

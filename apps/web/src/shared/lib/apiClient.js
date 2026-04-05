@@ -11,7 +11,7 @@
 'use client';
 import axios from 'axios';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:8000');
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 const apiClient = axios.create({
   baseURL: BASE_URL,
@@ -21,9 +21,9 @@ const apiClient = axios.create({
 
 apiClient.interceptors.request.use(
   (config) => {
+    const token = typeof window !== 'undefined' ? window.__zorvyn_token : null;
+    if (token) config.headers.Authorization = `Bearer ${token}`;
     if (typeof window !== 'undefined') {
-      const token = window.__zorvyn_token;
-      if (token) config.headers.Authorization = `Bearer ${token}`;
       config.headers['X-Correlation-ID'] = crypto.randomUUID();
     }
     return config;

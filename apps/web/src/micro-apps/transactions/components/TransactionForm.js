@@ -64,9 +64,21 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }) {
 
     try {
       setSubmitting(true);
+      
+      let formattedDate = formData.date;
+      if (formattedDate && !/^\d{4}-\d{2}-\d{2}$/.test(formattedDate)) {
+        const parts = formattedDate.split('-');
+        if (parts.length === 3 && parts[2].length === 4) {
+          formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+      }
+
       const payload = {
-        ...formData,
         amount: amountNum,
+        type: formData.type.toLowerCase(),
+        category: formData.category.trim(),
+        date: formattedDate,
+        notes: formData.notes ? formData.notes.trim() : null,
       };
 
       if (transaction?.id) {

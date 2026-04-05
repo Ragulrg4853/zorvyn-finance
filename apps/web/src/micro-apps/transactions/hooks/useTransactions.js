@@ -24,7 +24,14 @@ export function useTransactions() {
     try {
       setLoading(true);
       setError(null);
-      const data = await fetchTransactions(filters);
+      
+      const toISO = (val) => val && !/^\\d{4}-\\d{2}-\\d{2}$/.test(val) ? val.split('-').reverse().join('-') : val;
+      
+      const formattedFilters = { ...filters };
+      if (formattedFilters.date_from) formattedFilters.date_from = toISO(formattedFilters.date_from);
+      if (formattedFilters.date_to) formattedFilters.date_to = toISO(formattedFilters.date_to);
+
+      const data = await fetchTransactions(formattedFilters);
       setTransactions(data.data || []);
       setMeta(data.meta || { total: 0, current_page: 1, total_pages: 1 });
     } catch (err) {

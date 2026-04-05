@@ -1,13 +1,13 @@
 import { Lock, PieChart as PieChartIcon } from 'lucide-react';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { formatCurrency } from '@/shared/utils/formatters';
 import { motion } from 'framer-motion';
 import { MouseGlowCard } from '@/shared/components/ui/MouseGlowCard';
 
-const INCOME_COLORS = ['#00d4aa', '#00a885', '#008066', '#005e4a', '#004033'];
-const EXPENSE_COLORS = ['#ef4444', '#b91c1c', '#991b1b', '#7f1d1d', '#450a0a'];
+const INCOME_COLOR = '#22c55e'; // var(--color-income)
+const EXPENSE_COLOR = '#ef4444'; // var(--color-expense)
 
-export default function CategoryBreakdown({ data, loading, locked }) {
+export default function CategoryBreakdown({ summary, loading, locked }) {
   if (locked) {
     return (
       <div className="card relative flex flex-col items-center justify-center p-12 bg-gradient-to-br from-surface/80 to-surface/40 backdrop-blur-xl border border-white/5 rounded-2xl h-full min-h-[300px] overflow-hidden group">
@@ -24,23 +24,21 @@ export default function CategoryBreakdown({ data, loading, locked }) {
     );
   }
 
-  if (loading || !data) {
+  if (loading || !summary) {
     return <div className="card skeleton h-[400px] rounded-[var(--radius-card)] animate-pulse bg-[var(--color-surface)]/50 border border-white/5" />;
   }
 
-  const { income_by_category = [], expense_by_category = [] } = data;
+  const { total_income = 0, total_expense = 0 } = summary;
+  const total = total_income + total_expense;
+  
+  const data = [
+    { name: 'Total Income', value: total_income, color: INCOME_COLOR },
+    { name: 'Total Expense', value: total_expense, color: EXPENSE_COLOR }
+  ];
 
-  const CustomTooltip = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-surface/90 backdrop-blur-md border border-white/10 p-4 rounded-xl shadow-2xl text-sm text-white">
-          <p className="font-semibold text-gray-400 capitalize text-xs tracking-widest mb-1">{payload[0].name}</p>
-          <p className="font-syne font-bold text-lg">{formatCurrency(payload[0].value)}</p>
-        </div>
-      );
-    }
-    return null;
-  };
+  const savingsRate = total > 0 ? Math.round((total_income / total) * 100) : 0;
+  const incomePercent = total > 0 ? ((total_income / total) * 100).toFixed(1) : 0;
+  const expensePercent = total > 0 ? ((total_expense / total) * 100).toFixed(1) : 0;
 
   return (
     <motion.div 
@@ -49,77 +47,62 @@ export default function CategoryBreakdown({ data, loading, locked }) {
       transition={{ duration: 0.6, ease: "easeOut" }}
       className="h-full w-full min-h-[300px]"
     >
-      <MouseGlowCard className="grid grid-cols-1 md:grid-cols-2 gap-8 py-0 px-6 rounded-[var(--radius-card)] bg-gradient-to-br from-[#0c1222]/90 to-[#131a2f]/40 w-full h-full min-h-[300px] overflow-hidden cursor-default ring-1 ring-white/5 hover:ring-[var(--color-primary)]/30 hover:shadow-[0_12px_48px_rgba(0,212,170,0.15)]">
-      <div className="relative flex flex-col h-full pt-6">
-        <div className="flex items-center gap-3 mb-4 shrink-0 transition-opacity">
+      <MouseGlowCard className="flex flex-col py-0 px-6 rounded-[var(--radius-card)] bg-gradient-to-br from-[#0c1222]/90 to-[#131a2f]/40 w-full h-full min-h-[300px] overflow-hidden cursor-default ring-1 ring-white/5 hover:ring-[var(--color-primary)]/30 hover:shadow-[0_12px_48px_rgba(0,212,170,0.15)]">
+      <div className="relative flex flex-col h-full pt-6 w-full items-center justify-center">
+        <div className="flex items-center gap-3 mb-2 w-full shrink-0">
            <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
              <PieChartIcon className="w-4 h-4 text-primary" />
            </div>
-           <h3 className="text-white font-syne font-bold text-lg drop-shadow-sm tracking-tight">Income Distribution</h3>
+           <h3 className="text-white font-syne font-bold text-lg drop-shadow-sm tracking-tight w-full text-left">Expense vs Income Distribution</h3>
         </div>
         
-        {income_by_category.length > 0 ? (
-          <div className="flex-1 min-h-0 w-full flex items-center justify-center -translate-y-4">
-            <ResponsiveContainer width="100%" height="100%" minHeight={200}>
-              <PieChart>
-                <Pie
-                  data={income_by_category}
-                  dataKey="total"
-                  nameKey="category"
-                  innerRadius={70}
-                  outerRadius={100}
-                  paddingAngle={5}
-                  stroke="none"
-                >
-                  {income_by_category.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={INCOME_COLORS[index % INCOME_COLORS.length]} style={{ filter: `drop-shadow(0px 4px 6px ${INCOME_COLORS[index % INCOME_COLORS.length]}40)` }} />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomTooltip />} />
-                <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '12px', color: '#8b9dc3' }} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+        {total > 0 ? (
+          <>
+            <div className="flex-1 w-full flex items-center justify-center relative min-h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={data}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={70}
+                    outerRadius={100}
+                    paddingAngle={5}
+                    stroke="none"
+                  >
+                    {data.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} style={{ filter: `drop-shadow(0px 4px 6px ${entry.color}40)` }} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2">
+                <span className="text-3xl font-syne font-bold text-white tracking-tighter">{savingsRate}%</span>
+                <span className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold mt-1">Savings Rate</span>
+              </div>
+            </div>
+            
+            <div className="w-full flex justify-center gap-6 mt-4 mb-6 pt-4 border-t border-white/5">
+              <div className="flex flex-col items-center">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: INCOME_COLOR }} />
+                  <span className="text-gray-400 text-xs uppercase tracking-wider font-semibold">Income</span>
+                </div>
+                <span className="text-white font-syne font-bold">{formatCurrency(total_income)} <span className="text-gray-500 text-xs font-mono ml-1">({incomePercent}%)</span></span>
+              </div>
+              <div className="w-px h-8 bg-white/10" />
+              <div className="flex flex-col items-center">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: EXPENSE_COLOR }} />
+                  <span className="text-gray-400 text-xs uppercase tracking-wider font-semibold">Expense</span>
+                </div>
+                <span className="text-white font-syne font-bold">{formatCurrency(total_expense)} <span className="text-gray-500 text-xs font-mono ml-1">({expensePercent}%)</span></span>
+              </div>
+            </div>
+          </>
         ) : (
-          <div className="flex-1 flex items-center justify-center flex-col text-gray-500 border border-white/5 rounded-xl border-dashed mb-6 min-h-[200px]">
-            <p>No income data</p>
-          </div>
-        )}
-      </div>
-
-      <div className="relative flex flex-col h-full pt-6">
-        <div className="flex items-center gap-3 mb-4 shrink-0 transition-opacity">
-           <div className="w-8 h-8 rounded-lg bg-expense/10 border border-expense/20 flex items-center justify-center">
-             <PieChartIcon className="w-4 h-4 text-expense" />
-           </div>
-           <h3 className="font-syne font-bold text-lg drop-shadow-sm tracking-tight text-white">Expense Distribution</h3>
-        </div>
-        
-        {expense_by_category.length > 0 ? (
-          <div className="flex-1 min-h-0 w-full flex items-center justify-center -translate-y-4">
-            <ResponsiveContainer width="100%" height="100%" minHeight={200}>
-              <PieChart>
-                <Pie
-                  data={expense_by_category}
-                  dataKey="total"
-                  nameKey="category"
-                  innerRadius={70}
-                  outerRadius={100}
-                  paddingAngle={5}
-                  stroke="none"
-                >
-                  {expense_by_category.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={EXPENSE_COLORS[index % EXPENSE_COLORS.length]} style={{ filter: `drop-shadow(0px 4px 6px ${EXPENSE_COLORS[index % EXPENSE_COLORS.length]}40)` }} />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomTooltip />} />
-                <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '12px', color: '#8b9dc3' }} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        ) : (
-          <div className="flex-1 flex items-center justify-center flex-col text-gray-500 border border-white/5 rounded-xl border-dashed mb-6 min-h-[200px]">
-            <p>No expense data</p>
+          <div className="flex-1 w-full flex items-center justify-center flex-col text-gray-500 border border-white/5 rounded-xl border-dashed mb-6 py-12">
+            <p>No transaction data</p>
           </div>
         )}
       </div>

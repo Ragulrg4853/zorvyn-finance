@@ -11,7 +11,8 @@ export async function fetchPermissions() {
 }
 
 export async function assignPermissions(roleId, payload) {
-  const response = await apiClient.patch(`/v1/roles/${roleId}/permissions`, payload);
+  const defaultPayload = { grant: [], revoke: [], ...payload };
+  const response = await apiClient.patch(`/v1/roles/${roleId}/permissions`, defaultPayload);
   return response.data.data;
 }
 

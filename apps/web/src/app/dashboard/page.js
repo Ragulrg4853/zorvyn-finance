@@ -76,7 +76,7 @@ export default function DashboardPage() {
                  </div>
                  <div className="min-h-[300px]">
                     <CategoryBreakdown 
-                      data={insights} 
+                      summary={summary} 
                       loading={loading} 
                       locked={!hasPermission('dashboard:insights')} 
                     />

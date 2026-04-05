@@ -9,7 +9,7 @@
  */
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import ProtectedRoute from '../../micro-apps/auth/components/ProtectedRoute';
 import { useUsers } from '../../micro-apps/admin/hooks/useUsers';
 import { useRoles } from '../../micro-apps/admin/hooks/useRoles';
@@ -21,13 +21,29 @@ import { useAuth } from '../../micro-apps/auth/hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UserPlus, Shield, Users, Activity } from 'lucide-react';
 import LoadingSpinner from '../../shared/components/feedback/LoadingSpinner';
+import { useSearchParams, useRouter } from 'next/navigation';
 
-export default function AdminPage() {
+function AdminPageContent() {
   const { user, hasPermission, logout } = useAuth();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  
   const { users, loading: usersLoading, error: usersError, meta: usersMeta, filters: userFilters, setFilters: setUserFilters, deactivateUser } = useUsers();
   const { roles, permissions, auditLogs, loading: rolesLoading, auditLoading, error: rolesError, assignPermissions, auditFilters, setAuditFilters, auditMeta } = useRoles();
 
-  const [activeTab, setActiveTab] = useState('users');
+  const urlTab = searchParams.get('tab') || 'users';
+  const [activeTab, setActiveTab] = useState(urlTab);
+
+  useEffect(() => {
+    if (urlTab !== activeTab) {
+      setActiveTab(urlTab);
+    }
+  }, [urlTab]);
+
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    router.push(`/admin?tab=${tabId}`);
+  };
 
   const handleEditUser = (u) => {
     // Stub
@@ -89,7 +105,7 @@ export default function AdminPage() {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => handleTabChange(tab.id)}
                   className={`relative flex items-center gap-2 px-5 py-3 rounded-lg text-sm font-semibold tracking-wider uppercase transition-all duration-300 ${
                     isActive ? 'text-[var(--color-primary)]' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
                   }`}
@@ -154,6 +170,18 @@ export default function AdminPage() {
         </div>
       </AppShell>
     </ProtectedRoute>
+  );
+}
+
+export default function AdminPage() {
+  return (
+    <Suspense fallback={
+      <div className="h-screen w-full flex items-center justify-center bg-[#050811]">
+        <LoadingSpinner />
+      </div>
+    }>
+      <AdminPageContent />
+    </Suspense>
   );
 }
 

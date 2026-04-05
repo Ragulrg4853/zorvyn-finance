@@ -1,8 +1,12 @@
 import { formatCurrency } from '@/shared/utils/formatters';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
+import { TrendingUp, TrendingDown } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export default function RecentActivity({ transactions, loading }) {
+  const router = useRouter();
+
   if (loading) {
     return <div className="card skeleton w-full h-full min-h-[400px] rounded-2xl animate-pulse bg-surface/50 border border-border/50" />;
   }
@@ -29,7 +33,7 @@ export default function RecentActivity({ transactions, loading }) {
     >
       <div className="flex items-center justify-between mb-4 shrink-0 z-10 relative">
         <h3 className="font-syne text-xl text-white font-bold drop-shadow-sm tracking-tight">Recent Activity</h3>
-        <button className="text-xs text-primary/80 hover:text-primary transition-colors font-medium cursor-pointer">View All</button>
+        <button onClick={() => router.push('/transactions')} className="text-xs text-primary/80 hover:text-primary transition-colors font-medium cursor-pointer">View All</button>
       </div>
 
       {/* Fade Top/Bottom for Scroll */}
@@ -45,9 +49,10 @@ export default function RecentActivity({ transactions, loading }) {
             key={tx.id} 
             className="flex flex-row gap-4 items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.06] hover:border-white/10 transition-all group"
           >
+            <div className="flex flex-row items-center justify-between w-full h-full"> 
             <div className="flex flex-row items-center gap-3">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center bg-surface border ${tx.type === 'income' ? 'border-income/20 text-income' : 'border-expense/20 text-expense'} group-hover:scale-110 shadow-inner transition-transform`}>
-                {tx.type === 'income' ? 'â†“' : 'â†‘'}
+              <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-surface border ${tx.type === 'income' ? 'border-[#22c55e]/20 text-[#22c55e]' : 'border-[#ef4444]/20 text-[#ef4444]'} group-hover:scale-110 shadow-inner transition-transform`}>
+                {tx.type === 'income' ? <TrendingUp size={18} /> : <TrendingDown size={18} />}
               </div>
               <div className="flex flex-col">
                 <span className="text-gray-200 font-medium capitalize text-sm">
@@ -59,10 +64,11 @@ export default function RecentActivity({ transactions, loading }) {
               </div>
             </div>
              <div className="flex flex-col items-end">
-                <span className={`font-bold font-syne text-md tracking-tight ${tx.type === 'income' ? 'text-income' : 'text-expense'}`}>
+                <span className={`font-bold font-syne text-md tracking-tight ${tx.type === 'income' ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
                    {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount)}
                 </span>
              </div>
+            </div>
           </motion.div>
         ))}
       </div>

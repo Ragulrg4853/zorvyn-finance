@@ -22,7 +22,7 @@ export default function TransactionTable({
           <table className="w-full text-left whitespace-nowrap min-w-[700px]">
             <thead className="sticky top-0 z-10 bg-[#0c1222] border-b border-[var(--color-border)] text-xs text-gray-400 uppercase font-bold tracking-widest backdrop-blur-md">
               <tr>
-                {['Date', 'Type', 'Category', 'Amount', 'Notes', ...(canWrite ? ['Actions'] : [])].map(heading => (
+                {['ID', 'Date', 'Type', 'Category', 'Amount', 'Notes', ...(canWrite ? ['Actions'] : [])].map(heading => (
                   <th key={heading} className="px-6 py-4">{heading}</th>
                 ))}
               </tr>
@@ -30,6 +30,7 @@ export default function TransactionTable({
             <tbody className="divide-y divide-[var(--color-border)]">
               {[1, 2, 3, 4, 5, 6, 7].map(i => (
                 <tr key={i} className="animate-pulse transition-colors">
+                  <td className="px-6 py-4"><div className="h-4 bg-white/5 rounded w-16"></div></td>
                   <td className="px-6 py-4"><div className="h-4 bg-white/5 rounded w-24"></div></td>
                   <td className="px-6 py-4"><div className="h-6 bg-white/5 rounded-full w-16"></div></td>
                   <td className="px-6 py-4"><div className="h-4 bg-white/5 rounded w-20"></div></td>
@@ -88,6 +89,7 @@ export default function TransactionTable({
         <table className="w-full text-left whitespace-nowrap min-w-[800px] border-collapse">
           <thead className="sticky top-0 z-20 bg-[rgba(12,18,34,0.95)] backdrop-blur-xl border-b border-[var(--color-border)] text-[11px] text-gray-400 uppercase tracking-[0.1em] font-syne font-semibold shadow-sm after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[1px] after:bg-white/10">
             <tr>
+              <th className="px-6 py-4">ID</th>
               <SortableHeader field="date" label="Date" />
               <th className="px-6 py-4">Type</th>
               <SortableHeader field="category" label="Category" />
@@ -104,6 +106,9 @@ export default function TransactionTable({
                 style={{ animationDelay: `${idx * 30}ms`, animationFillMode: 'both' }}
               >
                 {/* using native CSS animation class if added globally, or simple inline map for stagger */}
+                <td className="px-6 py-4 font-mono text-gray-500 group-hover:text-gray-300 transition-colors cursor-help" title={tx.id}>
+                  {tx.id?.slice(0, 8)}
+                </td>
                 <td className="px-6 py-4 font-mono text-gray-400 group-hover:text-gray-200 transition-colors">
                   {format(new Date(tx.date), 'MMM dd, yyyy')}
                 </td>

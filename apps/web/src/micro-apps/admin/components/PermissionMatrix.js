@@ -1,13 +1,19 @@
 ﻿import React, { useState, useEffect } from 'react';
-import { Lock, Shield, User } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Lock, Shield, User, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export function PermissionMatrix({ roles, permissions, onChangePermissions, loading }) {
   const [localRoles, setLocalRoles] = useState([]);
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     setLocalRoles(roles || []);
   }, [roles]);
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   if (loading && (!localRoles || localRoles.length === 0)) {
     return (
@@ -31,11 +37,11 @@ export function PermissionMatrix({ roles, permissions, onChangePermissions, load
   };
 
   const handleToggle = async (roleId, currRole, perm) => {
-    const isProtectAdminRule = currRole.name === 'admin' && perm.name === 'roles:manage';
-    if (isProtectAdminRule) return;
+    if (currRole.name === 'admin') return;
 
     const hasPerm = currRole.permissions?.some((p) => p.id === perm.id);
     
+    // Optimistic update
     const newPermissions = hasPerm 
       ? currRole.permissions.filter((p) => p.id !== perm.id)
       : [...(currRole.permissions || []), perm];
@@ -47,23 +53,51 @@ export function PermissionMatrix({ roles, permissions, onChangePermissions, load
 
     try {
       if (hasPerm) {
-        await onChangePermissions(roleId, { revoke: [perm.id] });
+        await onChangePermissions(roleId, { revoke: [perm.id], grant: [] });
       } else {
-        await onChangePermissions(roleId, { grant: [perm.id] });
+        await onChangePermissions(roleId, { grant: [perm.id], revoke: [] });
       }
+      showToast('Permission updated successfully', 'success');
     } catch (err) {
+      // Revert on error
       setLocalRoles(roles || []);
+      showToast(err?.message || 'Failed to update permission', 'error');
     }
   };
 
   return (
-    <div className="h-full flex flex-col w-full overflow-hidden animate-in fade-in duration-500">
-      <div className="px-6 py-5 border-b border-[var(--color-border)] bg-[rgba(12,18,34,0.95)] sticky top-0 z-20 backdrop-blur-xl shrink-0">
-        <h3 className="text-xl font-syne font-bold text-gray-100 flex items-center gap-3 tracking-wide">
-          <Lock className="text-[var(--color-primary)]" size={22} />
-          Role Permissions
-        </h3>
-        <p className="text-sm text-gray-400 mt-1">Manage access control and operational boundaries across roles.</p>
+    <div className="h-full flex flex-col w-full overflow-hidden animate-in fade-in duration-500 relative">
+      
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: -20, x: '-50%' }}
+            className={`absolute top-6 left-1/2 z-50 flex items-center gap-2 px-4 py-3 rounded-lg shadow-2xl backdrop-blur-md border ${
+              toast.type === 'success' 
+                ? 'bg-green-500/10 border-green-500/30 text-green-400' 
+                : 'bg-red-500/10 border-red-500/30 text-red-400'
+            }`}
+          >
+            {toast.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+            <span className="text-sm font-semibold tracking-wide">{toast.message}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="px-6 py-5 border-b border-[var(--color-border)] bg-[rgba(12,18,34,0.95)] sticky top-0 z-20 backdrop-blur-xl shrink-0 flex justify-between items-start">
+        <div>
+          <h3 className="text-xl font-syne font-bold text-gray-100 flex items-center gap-3 tracking-wide">
+            <Lock className="text-[var(--color-primary)]" size={22} />
+            Role Permissions
+          </h3>
+          <p className="text-sm text-gray-400 mt-1">Manage access control and operational boundaries across roles.</p>
+        </div>
+        <div className="text-xs text-amber-400/80 bg-amber-500/10 px-3 py-1.5 rounded-lg border border-amber-500/20 font-medium">
+          Changes take effect within 5 minutes
+        </div>
       </div>
       
       <div className="overflow-auto flex-1 relative hide-scrollbars-on-mobile custom-scrollbar p-6">
@@ -96,31 +130,35 @@ export function PermissionMatrix({ roles, permissions, onChangePermissions, load
                   </td>
                   
                   {permissions?.map((perm) => {
-                    const hasPerm = role.permissions?.some((p) => p.id === perm.id);
-                    const isProtected = role.name === 'admin' && perm.name === 'roles:manage';
+                    const isAdmin = role.name === 'admin';
+                    const hasPerm = isAdmin || role.permissions?.some((p) => p.id === perm.id);
                     
                     return (
-                      <td key={perm.id} className="px-4 py-4 text-center border-l border-white/5">
+                      <td key={perm.id} className="px-4 py-4 text-center border-l border-white/5 relative">
                         <label 
-                          className={`inline-flex relative items-center justify-center w-5 h-5 rounded border ${
-                            isProtected ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-[var(--color-primary-light)]'
-                          } ${
-                            hasPerm ? 'bg-[var(--color-primary)] border-[var(--color-primary)]' : 'bg-black/20 border-white/20'
-                          } transition-colors`}
-                          title={isProtected ? "Admin must retain roles manage permission" : ""}
+                          className={`inline-flex relative items-center justify-center w-6 h-6 rounded border transition-colors ${
+                            isAdmin 
+                              ? 'bg-teal-500/20 border-teal-500/40 cursor-not-allowed opacity-80' 
+                              : hasPerm 
+                                ? 'bg-[var(--color-primary)] border-[var(--color-primary)] cursor-pointer hover:border-[var(--color-primary-light)]' 
+                                : 'bg-black/20 border-white/20 cursor-pointer hover:border-[var(--color-primary-light)]'
+                          }`}
+                          title={isAdmin ? "Admin has all permissions — cannot be modified" : ""}
                         >
                           <input
                             type="checkbox"
                             checked={hasPerm || false}
-                            disabled={isProtected}
+                            disabled={isAdmin}
                             onChange={() => handleToggle(role.id, role, perm)}
                             className="absolute opacity-0 w-full h-full cursor-pointer disabled:cursor-not-allowed"
                           />
-                          {hasPerm && (
-                            <motion.svg initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-3 h-3 text-white pointer-events-none" viewBox="0 0 14 14" fill="none">
+                          {isAdmin ? (
+                            <Lock size={12} className="text-teal-400" />
+                          ) : hasPerm ? (
+                            <motion.svg initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-3.5 h-3.5 text-white pointer-events-none" viewBox="0 0 14 14" fill="none">
                                <path d="M3 8L6 11L11 3.5" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" stroke="currentColor" />
                             </motion.svg>
-                          )}
+                          ) : null}
                         </label>
                       </td>
                     );
