@@ -55,7 +55,8 @@ import os
 
 frontend_origins = [
     "http://localhost:3000",
-    "https://zorvyn-finance.vercel.app"
+    "https://zorvyn-finance.vercel.app",
+    "https://zorvyn-finance-seven.vercel.app"
 ]
 if os.getenv("FRONTEND_URL"):
     frontend_origins.append(os.getenv("FRONTEND_URL"))
