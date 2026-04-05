@@ -27,7 +27,7 @@ export function PermissionMatrix({ roles, permissions, onChangePermissions, load
     else shortDomain = domain.charAt(0).toUpperCase() + domain.slice(1);
     
     const capitalizedAction = action.charAt(0).toUpperCase() + action.slice(1);
-    return \\ \\;
+    return `${shortDomain} ${capitalizedAction}`;
   };
 
   const handleToggle = async (roleId, currRole, perm) => {
@@ -84,7 +84,11 @@ export function PermissionMatrix({ roles, permissions, onChangePermissions, load
                 <tr key={role.id} className="group hover:bg-white/5 transition-all duration-200">
                   <td className="px-6 py-4 sticky left-0 z-10 bg-[#0d1222] group-hover:bg-[#151b2b] border-r border-[#1a2235] transition-colors">
                      <div className="flex items-center gap-3">
-                        <div className={\w-8 h-8 rounded-full flex items-center justify-center border border-white/10 shrink-0 \\}>
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center border border-white/10 shrink-0 ${
+                          role.name === 'admin' ? 'bg-teal-500/20 text-teal-400' :
+                          role.name === 'analyst' ? 'bg-amber-500/20 text-amber-400' :
+                          'bg-gray-500/20 text-gray-400'
+                        }`}>
                           {role.name === 'admin' ? <Shield size={14} /> : <User size={14} />}
                         </div>
                         <span className="font-bold text-gray-200 capitalize tracking-wide">{role.name}</span>
@@ -98,7 +102,11 @@ export function PermissionMatrix({ roles, permissions, onChangePermissions, load
                     return (
                       <td key={perm.id} className="px-4 py-4 text-center border-l border-white/5">
                         <label 
-                          className={\inline-flex relative items-center justify-center w-5 h-5 rounded border \ \ transition-colors\}
+                          className={`inline-flex relative items-center justify-center w-5 h-5 rounded border ${
+                            isProtected ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-[var(--color-primary-light)]'
+                          } ${
+                            hasPerm ? 'bg-[var(--color-primary)] border-[var(--color-primary)]' : 'bg-black/20 border-white/20'
+                          } transition-colors`}
                           title={isProtected ? "Admin must retain roles manage permission" : ""}
                         >
                           <input
