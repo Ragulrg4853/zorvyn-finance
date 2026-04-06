@@ -9,7 +9,7 @@
 | Service | URL |
 |---|---|
 | **Frontend** | https://zorvyn-finance-seven.vercel.app |
-| **API Docs** | https://your-api.up.railway.app/docs |
+| **API Docs** | https://zorvyn-finance-production.up.railway.app/docs |
 
 **Test credentials:**
 
