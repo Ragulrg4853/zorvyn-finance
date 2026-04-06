@@ -8,14 +8,13 @@ Follow every step in order. Do not skip.
 
 Open VS Code -> Extensions (Ctrl+Shift+X) -> install each:
 
-1. GitHub Copilot          (GitHub)
-2. GitHub Copilot Chat     (GitHub)
-3. Python                  (Microsoft)
-4. Pylance                 (Microsoft)
-5. ES7+ React/Redux        (dsznajder)
-6. Tailwind CSS IntelliSense (Tailwind Labs)
-7. Thunder Client          (Ranga Vadhineni)  <- API testing inside VS Code
-8. Error Lens              (Alexander)
+
+1. Python                  (Microsoft)
+2. Pylance                 (Microsoft)
+3. ES7+ React/Redux        (dsznajder)
+4. Tailwind CSS IntelliSense (Tailwind Labs)
+5. Thunder Client          (Ranga Vadhineni)  <- API testing inside VS Code
+6. Error Lens              (Alexander)
 
 ---
 
