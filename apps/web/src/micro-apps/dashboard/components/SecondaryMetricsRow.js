@@ -62,7 +62,9 @@ export default function SecondaryMetricsRow({ summary, insights, loading }) {
         </div>
         <div className="flex items-end gap-3 flex-1 pb-1">
           <span className="text-2xl font-syne font-bold text-white">{formatCurrency(currentMonthIncome)}</span>
-          <span className={\	ext-sm font-semibold mb-1 \\}>
+          <span className={`text-sm font-semibold mb-1 ${
+            monthlyChange >= 0 ? "text-emerald-400" : "text-rose-400"
+          }`}>
             {monthlyChange >= 0 ? '+' : ''}{monthlyChange.toFixed(1)}% mo/mo
           </span>
         </div>
@@ -75,7 +77,9 @@ export default function SecondaryMetricsRow({ summary, insights, loading }) {
         </div>
         <div className="flex items-end gap-3 flex-1 pb-1">
           <span className="text-2xl font-syne font-bold text-white">{formatCurrency(thisWeek)}</span>
-          <span className={\	ext-sm font-semibold mb-1 \\}>
+          <span className={`text-sm font-semibold mb-1 ${
+            weeklyChange >= 0 ? "text-emerald-400" : "text-rose-400"
+          }`}>
             {weeklyChange >= 0 ? '+' : ''}{weeklyChange.toFixed(1)}% wk/wk
           </span>
         </div>

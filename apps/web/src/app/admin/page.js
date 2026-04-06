@@ -71,7 +71,7 @@ function AdminPageContent() {
     } catch (err) {
       alert(getErrorMessage(err));
     }
-  };;
+  };
 
   const handleCreateUser = async (payload) => {
     await createUser(payload);
@@ -96,7 +96,6 @@ function AdminPageContent() {
             </h1>
             
             <div className="flex items-center justify-end w-full md:w-auto h-10">
-              }
             </div>
           </div>
 
