@@ -10,6 +10,7 @@ import os
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from fastapi import FastAPI, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -92,7 +93,22 @@ async def app_error_handler(request: Request, exc: AppError):
             "error": exc.detail
         },
     )
-
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    loc_field = str(exc.errors()[0]["loc"][-1]) if exc.errors() else "unknown"
+    msg = str(exc.errors()[0]["msg"]) if exc.errors() else "Invalid request data"
+    return JSONResponse(
+        status_code=422,
+        content={
+            "data": None,
+            "meta": {"correlation_id": getattr(request.state, "correlation_id", "")},
+            "error": {
+                "code": "VALIDATION_001",
+                "message": msg,
+                "field": loc_field
+            }
+        }
+    )
 @app.exception_handler(RequestValidationError)
 async def validation_error_handler(request: Request, exc: RequestValidationError):
     return JSONResponse(

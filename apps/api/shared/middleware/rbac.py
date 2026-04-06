@@ -136,6 +136,9 @@ def require_permission(permission: str):
     ) -> User:
         role_name = current_user.role.value if hasattr(current_user.role, "value") else current_user.role
         
+        if role_name == "admin":
+            return current_user
+        
         allowed = get_cached_permissions(str(current_user.id), role_name, db)
 
         if permission not in allowed:

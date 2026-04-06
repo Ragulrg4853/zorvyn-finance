@@ -10,11 +10,28 @@ from shared.models.transaction import TransactionType
 
 
 class TransactionCreate(BaseModel):
-    amount:   Decimal
+    amount:   Decimal = Field(gt=0, le=999999999.99)
     type:     TransactionType
-    category: str = Field(..., max_length=100)
+    category: str = Field(..., min_length=1, max_length=100)
     date:     date
-    notes:    Optional[str] = Field(None, max_length=1000)
+    notes:    Optional[str] = Field(None, max_length=500)
+
+    @field_validator("type", mode="before")
+    @classmethod
+    def type_normalize(cls, v):
+        if isinstance(v, str):
+            v_low = v.lower()
+            if v_low in ("income", "expense"):
+                return v_low
+        return v
+
+    @field_validator("date")
+    @classmethod
+    def check_date_bounds(cls, v: date) -> date:
+        today = date.today()
+        if today.year - v.year > 10:
+            raise ValueError("Date cannot be more than 10 years in the past.")
+        return v
 
     @field_validator("amount")
     @classmethod
@@ -33,11 +50,30 @@ class TransactionCreate(BaseModel):
 
 
 class TransactionUpdate(BaseModel):
-    amount:   Optional[Decimal] = None
+    amount:   Optional[Decimal] = Field(None, gt=0, le=999999999.99)
     type:     Optional[TransactionType] = None
-    category: Optional[str] = Field(None, max_length=100)
+    category: Optional[str] = Field(None, min_length=1, max_length=100)
     date:     Optional[date] = None
-    notes:    Optional[str] = Field(None, max_length=1000)
+    notes:    Optional[str] = Field(None, max_length=500)
+
+    @field_validator("date", mode="before")
+    @classmethod
+    def normalize_date(cls, v):
+        if v is None: return v
+        if isinstance(v, str) and len(v) == 10:
+            if v[2] == '-' and v[5] == '-':  # DD-MM-YYYY
+                parts = v.split('-')
+                return f"{parts[2]}-{parts[1]}-{parts[0]}"
+        return v
+
+    @field_validator("type", mode="before")
+    @classmethod
+    def type_normalize(cls, v):
+        if isinstance(v, str):
+            v_low = v.lower()
+            if v_low in ("income", "expense"):
+                return v_low
+        return v
 
     @field_validator("amount")
     @classmethod
