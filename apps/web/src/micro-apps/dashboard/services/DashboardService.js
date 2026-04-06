@@ -4,20 +4,12 @@
  */
 import apiClient from '@/shared/lib/apiClient';
 
-export async function fetchSummary(dateFrom = null, dateTo = null) {
-  const params = {};
-  const toISO = (val) => val && !/^\d{4}-\d{2}-\d{2}$/.test(val) ? val.split('-').reverse().join('-') : val;
-  if (dateFrom) params.date_from = toISO(dateFrom);
-  if (dateTo)   params.date_to   = toISO(dateTo);
+export async function fetchSummary(params = {}) {
   const response = await apiClient.get('/v1/dashboard/summary', { params });
   return response.data.data;
 }
 
-export async function fetchInsights(dateFrom = null, dateTo = null) {
-  const params = {};
-  const toISO = (val) => val && !/^\d{4}-\d{2}-\d{2}$/.test(val) ? val.split('-').reverse().join('-') : val;
-  if (dateFrom) params.date_from = toISO(dateFrom);
-  if (dateTo)   params.date_to   = toISO(dateTo);
+export async function fetchInsights(params = {}) {
   const response = await apiClient.get('/v1/dashboard/insights', { params });
   return response.data.data;
 }

@@ -7,6 +7,11 @@ const syne  = Syne({ subsets: ['latin'], variable: '--font-syne', weight: ['400'
 export const metadata = {
   title: 'Zorvyn Finance — Secure Financial Systems',
   description: 'Enterprise-grade finance data processing and access control platform',
+  icons: {
+    icon: '/favicon.png',
+    shortcut: '/favicon.png',
+    apple: '/favicon.png',
+  },
   manifest: '/manifest.json',
 };
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchUsers, createUser as apiCreateUser, updateUser as apiUpdateUser, deactivateUser as apiDeactivateUser } from '../services/UserService';
+import * as UserService from '../services/UserService';
 import { getErrorMessage } from '@/shared/lib/errorHandler';
 
 export function useUsers() {
@@ -15,11 +15,11 @@ export function useUsers() {
     page_size: 10,
   });
 
-  const fetchUsersData = useCallback(async () => {
+  const loadUsers = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await fetchUsers(filters);
+      const data = await UserService.fetchUsers(filters);
       setUsers(data.data || []);
       setMeta(data.meta || { total: 0, current_page: 1, total_pages: 1 });
     } catch (err) {
@@ -30,32 +30,33 @@ export function useUsers() {
   }, [filters]);
 
   useEffect(() => {
-    fetchUsersData();
-  }, [fetchUsersData]);
+    loadUsers();
+  }, [loadUsers]);
 
   const createUser = async (payload) => {
-    await apiCreateUser(payload);
-    fetchUsersData();
+    await UserService.createUser(payload);
+    loadUsers();
   };
 
   const updateUser = async (id, payload) => {
-    await apiUpdateUser(id, payload);
-    fetchUsersData();
+    await UserService.updateUser(id, payload);
+    loadUsers();
   };
 
   const deactivateUser = async (id) => {
-    await apiDeactivateUser(id);
-    fetchUsersData();
+    await UserService.deactivateUser(id);
+    loadUsers();
   };
 
   return { 
     users, 
+    setUsers,
     loading, 
     error, 
     meta, 
     filters, 
     setFilters, 
-    refetch: fetchUsersData, 
+    refetch: loadUsers, 
     createUser, 
     updateUser, 
     deactivateUser 

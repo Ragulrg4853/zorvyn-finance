@@ -42,8 +42,12 @@ def list_filtered(db: Session, txn_type=None, category=None, date_from=None,
     q = db.query(Transaction).filter(Transaction.is_deleted == False)
     if txn_type:    q = q.filter(Transaction.type == txn_type)
     if category:    q = q.filter(Transaction.category.ilike(f"%{category}%"))
-    if date_from:   q = q.filter(Transaction.date >= date_from)
-    if date_to:     q = q.filter(Transaction.date <= date_to)
+    if date_from and date_to:
+        q = q.filter(Transaction.date >= date_from, Transaction.date <= date_to)
+    elif date_from:
+        q = q.filter(Transaction.date >= date_from)
+    elif date_to:
+        q = q.filter(Transaction.date <= date_to)
     if search:
         q = q.filter(
             Transaction.notes.ilike(f"%{search}%") |
@@ -65,8 +69,12 @@ def stream_filtered(db: Session, txn_type=None, category=None, date_from=None,
     q = db.query(Transaction).filter(Transaction.is_deleted == False)
     if txn_type:    q = q.filter(Transaction.type == txn_type)
     if category:    q = q.filter(Transaction.category.ilike(f"%{category}%"))
-    if date_from:   q = q.filter(Transaction.date >= date_from)
-    if date_to:     q = q.filter(Transaction.date <= date_to)
+    if date_from and date_to:
+        q = q.filter(Transaction.date >= date_from, Transaction.date <= date_to)
+    elif date_from:
+        q = q.filter(Transaction.date >= date_from)
+    elif date_to:
+        q = q.filter(Transaction.date <= date_to)
     if search:
         q = q.filter(
             Transaction.notes.ilike(f"%{search}%") |

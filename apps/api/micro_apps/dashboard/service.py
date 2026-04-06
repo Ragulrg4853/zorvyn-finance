@@ -7,7 +7,7 @@ Algorithm: Single DB fetch, single O(n) pass builds ALL metrics simultaneously.
   Space: O(m) where m = unique months (max 12 returned)
 """
 from collections import defaultdict
-from datetime import date
+from datetime import date, timedelta
 from typing import Optional
 from sqlalchemy.orm import Session
 from shared.models.transaction import TransactionType

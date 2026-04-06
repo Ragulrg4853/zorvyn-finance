@@ -25,11 +25,26 @@ export function useTransactions() {
       setLoading(true);
       setError(null);
       
-      const toISO = (val) => val && !/^\\d{4}-\\d{2}-\\d{2}$/.test(val) ? val.split('-').reverse().join('-') : val;
+      const toAPIDate = (ddmmyyyy) => {
+        if (!ddmmyyyy || !ddmmyyyy.includes('-')) return null;
+        const parts = ddmmyyyy.split('-');
+        if (parts.length !== 3) return null;
+        if (parts[0].length === 4) return ddmmyyyy;
+        return `${parts[2]}-${parts[1]}-${parts[0]}`;
+      };
       
       const formattedFilters = { ...filters };
-      if (formattedFilters.date_from) formattedFilters.date_from = toISO(formattedFilters.date_from);
-      if (formattedFilters.date_to) formattedFilters.date_to = toISO(formattedFilters.date_to);
+      if (formattedFilters.date_from) {
+        formattedFilters.date_from = toAPIDate(formattedFilters.date_from);
+      } else {
+        delete formattedFilters.date_from;
+      }
+      
+      if (formattedFilters.date_to) {
+        formattedFilters.date_to = toAPIDate(formattedFilters.date_to);
+      } else {
+        delete formattedFilters.date_to;
+      }
 
       const data = await fetchTransactions(formattedFilters);
       setTransactions(data.data || []);
@@ -45,5 +60,5 @@ export function useTransactions() {
     fetchTransactionsData();
   }, [fetchTransactionsData]);
 
-  return { transactions, loading, error, meta, filters, setFilters, refetch: fetchTransactionsData };
+  return { transactions, setTransactions, loading, error, meta, filters, setFilters, refetch: fetchTransactionsData };
 }

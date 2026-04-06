@@ -38,7 +38,7 @@ export default function TrendChart({ data, loading }) {
            <div className="w-12 h-12 rounded-full bg-border inline-flex items-center justify-center mb-3 text-gray-400 shadow-inner">
              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3v18h18" /><path d="M18 9l-5 5-4-4-4 4" /></svg>
            </div>
-           <p className="font-medium tracking-wide">No transaction data available</p>
+           <p className="font-medium tracking-wide">No data available for this period</p>
         </div>
       </div>
     );
@@ -74,7 +74,7 @@ export default function TrendChart({ data, loading }) {
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
             <XAxis dataKey="month" stroke="#718096" tick={{ fill: '#718096', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(dateStr) => {
               try {
-                return format(new Date(dateStr + '-01'), "MMM ''yy");
+                return format(new Date(dateStr + '-01'), "MMM");
               } catch {
                 return dateStr;
               }

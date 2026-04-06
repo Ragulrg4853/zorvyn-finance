@@ -90,13 +90,14 @@ def get_cached_permissions(user_id: str, role: str, db: Session) -> set[str]:
     Assumption: admin permission changes take up to 5min to propagate.
     """
     now = time()
-    if user_id in _PERMISSIONS_CACHE:
-        perms, expires_at = _PERMISSIONS_CACHE[user_id]
+    cache_key = str(user_id)
+    if cache_key in _PERMISSIONS_CACHE:
+        perms, expires_at = _PERMISSIONS_CACHE[cache_key]
         if now < expires_at:
             return perms
     # Cache miss or expired — query DB
     perms = fetch_permissions_from_db(db, role)
-    _PERMISSIONS_CACHE[user_id] = (perms, now + _CACHE_TTL_SECONDS)
+    _PERMISSIONS_CACHE[cache_key] = (perms, now + _CACHE_TTL_SECONDS)
     return perms
 
 def get_current_user(

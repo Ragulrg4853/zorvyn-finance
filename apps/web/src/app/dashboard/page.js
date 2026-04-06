@@ -22,8 +22,8 @@ import { endOfMonth, startOfMonth, format } from 'date-fns';
 
 export default function DashboardPage() {
   const { user, hasPermission, logout } = useAuth();
-  const [dateFrom, setDateFrom] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
-  const [dateTo, setDateTo] = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
+  const [dateFrom, setDateFrom] = useState(null);
+  const [dateTo, setDateTo] = useState(null);
 
   const { summary, insights, loading, error, refetch } = useDashboard({
     dateFrom,
@@ -42,17 +42,24 @@ export default function DashboardPage() {
             <div className="flex flex-row items-center gap-2 bg-[#111827]/80 backdrop-blur-md p-1.5 rounded-lg border border-white/5 shadow-sm">
               <input
                 type="date"
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
+                value={dateFrom || ''}
+                onChange={(e) => setDateFrom(e.target.value || null)}
                 className="input bg-transparent border-none text-sm py-1.5 px-2 focus:outline-none focus:ring-1 focus:ring-primary/50 rounded text-gray-300 w-full sm:w-auto"
               />
               <span className="text-gray-600 font-bold px-1 text-xs uppercase tracking-widest">to</span>
               <input
                 type="date"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
+                value={dateTo || ''}
+                onChange={(e) => setDateTo(e.target.value || null)}
                 className="input bg-transparent border-none text-sm py-1.5 px-2 focus:outline-none focus:ring-1 focus:ring-primary/50 rounded text-gray-300 w-full sm:w-auto"
               />
+              <button 
+                onClick={() => { setDateFrom(null); setDateTo(null); }}
+                className="ml-2 px-3 py-1.5 text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/10 rounded transition-colors"
+                title="Clear Dates"
+              >
+                Clear
+              </button>
             </div>
           </div>
 

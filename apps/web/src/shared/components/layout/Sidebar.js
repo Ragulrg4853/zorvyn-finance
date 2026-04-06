@@ -1,12 +1,23 @@
 'use client';
-import { usePathname, useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import { LayoutDashboard, Wallet, LogOut, CodeSquare, Users, Shield, FileText } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Sidebar({ user, onLogout, hasPermission }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && showLogoutModal) setShowLogoutModal(false);
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [showLogoutModal]);
 
   // Condition links
   const NAV_ITEMS = [
@@ -25,7 +36,7 @@ export default function Sidebar({ user, onLogout, hasPermission }) {
   const renderNavItem = (item) => {
     // If it's an admin tab link, we need to check the query param
     const isTabItem = !!item.act;
-    const currentTab = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') || 'users' : 'users';
+    const currentTab = searchParams ? (searchParams.get('tab') || 'users') : (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') || 'users' : 'users');
     
     let isActive;
     if (isTabItem) {
@@ -112,13 +123,59 @@ export default function Sidebar({ user, onLogout, hasPermission }) {
         </div>
 
         <button 
-          onClick={onLogout}
+          onClick={() => setShowLogoutModal(true)}
           className="w-full flex items-center justify-center gap-2 py-2.5 px-4 text-sm font-semibold rounded-lg text-gray-400 hover:text-white hover:bg-expense/10 hover:shadow-[0_0_12px_var(--color-expense-transparent)] transition-all duration-300 group"
         >
           <LogOut className="w-4 h-4 group-hover:text-expense transition-colors" />
           Logout
         </button>
       </div>
+
+      <AnimatePresence>
+        {showLogoutModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-auto">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setShowLogoutModal(false)}
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="relative bg-[rgba(15,20,35,0.95)] backdrop-blur-2xl border border-[var(--color-border)] p-6 rounded-2xl shadow-2xl w-full max-w-sm flex flex-col items-center text-center"
+            >
+              <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4">
+                <LogOut className="w-6 h-6 text-[#ef4444]" />
+              </div>
+              <h2 className="font-syne text-xl font-bold text-white mb-2">Sign Out</h2>
+              <p className="text-sm text-gray-400 mb-6">Are you sure you want to sign out of Zorvyn Finance?</p>
+              
+              <div className="flex w-full gap-3">
+                <button 
+                  onClick={() => setShowLogoutModal(false)}
+                  className="flex-1 py-2.5 px-4 rounded-lg font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition-colors btn-ghost"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={() => {
+                    setShowLogoutModal(false);
+                    onLogout();
+                  }}
+                  className="flex-1 py-2.5 px-4 rounded-lg font-semibold text-white bg-[#ef4444] hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20"
+                >
+                  Sign Out
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </aside>
   );
 }

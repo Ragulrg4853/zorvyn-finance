@@ -1,7 +1,7 @@
 ﻿'use client';
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Search, Activity, Wallet } from 'lucide-react';
+import { Bell, Search, Activity, Wallet, Plus, Edit2, Trash2 } from 'lucide-react';
 import { useAuth } from '../../../micro-apps/auth/hooks/useAuth';
 import apiClient from '../../lib/apiClient';
 import { formatDistanceToNow, format } from 'date-fns';
@@ -24,6 +24,28 @@ export default function Topbar({ title, user }) {
   const router = useRouter();
 
   const canReadAudit = hasPermission('audit:read');
+
+  const fetchNotifications = async () => {
+    if (!canReadAudit) return;
+    setLoading(true);
+    try {
+      const res = await apiClient.get('/v1/audit/logs', { params: { page_size: 10 } });
+      setNotifications(res.data?.data || []);
+    } catch (err) {
+      console.error("Error fetching notifications", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (canReadAudit) {
+      // Auto-refresh every 30 seconds
+      fetchNotifications();
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [canReadAudit]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -49,18 +71,6 @@ export default function Topbar({ title, user }) {
     };
   }, []);
 
-  useEffect(() => {
-    if (canReadAudit) {
-      setLoading(true);
-      apiClient.get('/v1/audit/logs', { params: { page_size: 5 } })
-        .then((res) => {
-          setNotifications(res.data?.data || []);
-        })
-        .catch(err => console.error("Error fetching notifications", err))
-        .finally(() => setLoading(false));
-    }
-  }, [canReadAudit]);
-
   // Debounced search
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -84,6 +94,7 @@ export default function Topbar({ title, user }) {
   }, [searchQuery]);
 
   const toggleDropdown = () => {
+    if (!isDropdownOpen && canReadAudit) fetchNotifications();
     setIsDropdownOpen((prev) => !prev);
   };
 
@@ -127,11 +138,6 @@ export default function Topbar({ title, user }) {
             {isSearching && (
                <div className="ml-2 shrink-0 w-3 h-3 rounded-full border-2 border-[var(--color-primary)] border-t-transparent animate-spin"></div>
             )}
-            {!searchQuery && !isSearching && (
-              <div className="ml-2 px-1.5 py-0.5 rounded text-[10px] bg-white/5 text-gray-500 font-medium tracking-wider select-none shrink-0 pointer-events-none">
-                {'\u2318'}K
-              </div>
-            )}
           </div>
 
           <AnimatePresence>
@@ -163,11 +169,11 @@ export default function Topbar({ title, user }) {
                               <Wallet size={14} />
                             </div>
                             <div className="flex flex-col overflow-hidden">
-                              <span className="text-sm font-medium text-gray-200 capitalize truncate">{tx.category}</span>
+                                <span className="text-sm font-bold text-gray-200 capitalize truncate">{tx.category}</span>
                               <span className="text-[10px] text-gray-500 font-mono mt-0.5">{format(new Date(tx.date), 'MMM dd, yyyy')}</span>
                             </div>
                           </div>
-                          <span className={`font-bold font-syne text-sm shrink-0 pl-2 ${tx.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>
+                            <span className="font-bold font-syne text-sm shrink-0 pl-2 text-teal-400">
                              {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount)}
                           </span>
                         </button>
@@ -201,7 +207,7 @@ export default function Topbar({ title, user }) {
           >
             <Bell className="w-5 h-5" />
             {notifications.length > 0 && (
-              <span className="absolute top-1 right-1 w-4 h-4 text-[9px] font-bold flex items-center justify-center rounded-full bg-[var(--color-primary)] text-white shadow-[0_0_10px_rgba(var(--color-primary-rgb),0.5)]">
+              <span className="absolute top-1 right-1 w-4 h-4 text-[9px] font-bold flex items-center justify-center rounded-full bg-red-500 text-white shadow-[0_0_10px_rgba(239,68,68,0.5)]">
                  {notifications.length}
               </span>
             )}
@@ -219,7 +225,7 @@ export default function Topbar({ title, user }) {
                 <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between bg-black/20">
                   <h3 className="text-sm font-syne font-bold text-gray-100 flex items-center gap-2">
                     <Activity size={16} className="text-[var(--color-primary)]" />
-                    Notifications
+                    Recent Activity
                   </h3>
                   {notifications.length > 0 && (
                     <span className="text-[10px] uppercase tracking-wider text-[var(--color-primary)] font-bold bg-[var(--color-primary)]/10 px-2 py-0.5 rounded">
@@ -233,12 +239,12 @@ export default function Topbar({ title, user }) {
                     <div className="p-6 flex justify-center">
                        <div className="w-5 h-5 rounded-full border-2 border-[var(--color-primary)] border-t-transparent animate-spin"></div>
                     </div>
-                  ) : notifications.length === 0 ? (
+                  ) : (!canReadAudit || notifications.length === 0) ? (
                     <div className="p-8 flex flex-col items-center justify-center text-center">
                       <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3">
-                        <Bell className="text-gray-500 opacity-50" size={24} />
+                        <Activity className="text-gray-500 opacity-50" size={24} />
                       </div>
-                      <p className="text-sm font-medium text-gray-300">No new notifications</p>
+                      <p className="text-sm font-medium text-gray-300">No recent activity</p>
                       <p className="text-xs text-gray-500 mt-1">You're all caught up!</p>
                     </div>
                   ) : (
@@ -246,15 +252,21 @@ export default function Topbar({ title, user }) {
                       {notifications.map((notif) => {
                         const dateVal = notif.created_at || notif.timestamp;
                         const timeAgo = dateVal ? formatDistanceToNow(new Date(dateVal), { addSuffix: true }) : 'Just now';
+                        const ActionIcon = notif.action === 'delete' ? Trash2 : notif.action === 'update' ? Edit2 : Plus;
+                        const iconColor = notif.action === 'delete' ? 'text-red-400' : notif.action === 'update' ? 'text-blue-400' : 'text-green-400';
                         return (
-                          <li key={notif.id} className="p-4 hover:bg-white/5 transition-colors cursor-default group">
-                             <p className="text-xs text-gray-300 font-medium flex items-center flex-wrap gap-1.5">
-                               <span className="text-white font-mono bg-white/10 px-1.5 py-0.5 rounded text-[10px] tracking-wider">{notif.action}</span>
-                               <span className="text-gray-500 font-bold">•</span>
-                               <span className="capitalize text-gray-400">{notif.resource_type || 'System'}</span>
-                               <span className="text-gray-500 font-bold">•</span>
-                               <span className="text-gray-400">{timeAgo}</span>
-                             </p>
+                          <li key={notif.id} className="p-4 hover:bg-white/5 transition-colors cursor-default border-b border-white/5 last:border-0 group flex items-start gap-3">
+                             <div className={`mt-0.5 shrink-0 ${iconColor} bg-white/5 p-1.5 rounded-md`}>
+                               <ActionIcon size={14} />
+                             </div>
+                             <div className="flex flex-col gap-1">
+                               <p className="text-sm text-gray-200">
+                                 <span className="font-semibold">{notif.username || 'System'}</span>{' '}
+                                 <span className="text-gray-400">{notif.action}</span>{' '}
+                                 <span className="font-semibold capitalize text-primary">{notif.resource_type || 'resource'}</span>
+                               </p>
+                               <span className="text-xs text-gray-500">{timeAgo}</span>
+                             </div>
                           </li>
                         );
                       })}

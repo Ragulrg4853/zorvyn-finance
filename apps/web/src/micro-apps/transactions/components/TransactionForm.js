@@ -65,28 +65,33 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }) {
     try {
       setSubmitting(true);
       
-      let formattedDate = formData.date;
-      if (formattedDate && !/^\d{4}-\d{2}-\d{2}$/.test(formattedDate)) {
-        const parts = formattedDate.split('-');
-        if (parts.length === 3 && parts[2].length === 4) {
-          formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
-        }
-      }
-
-      const payload = {
-        amount: amountNum,
-        type: formData.type.toLowerCase(),
-        category: formData.category.trim(),
-        date: formattedDate,
-        notes: formData.notes ? formData.notes.trim() : null,
+      const toAPIDate = (ddmmyyyy) => {
+        if (!ddmmyyyy || !ddmmyyyy.includes('-')) return null;
+        const parts = ddmmyyyy.split('-');
+        if (parts.length !== 3) return null;
+        if (parts[0].length === 4) return ddmmyyyy;
+        return `${parts[2]}-${parts[1]}-${parts[0]}`;
       };
 
+      const payload = {
+        amount: parseFloat(formData.amount),
+        type: formData.type.toLowerCase(),
+        category: formData.category.trim(),
+        date: toAPIDate(formData.date),
+        notes: formData.notes?.trim() || null
+      };
+
+      let resultTx;
       if (transaction?.id) {
-        await updateTransaction(transaction.id, payload);
+        resultTx = await updateTransaction(transaction.id, payload);
       } else {
-        await createTransaction(payload);
+        resultTx = await createTransaction(payload);
+        resultTx._isNew = true; // For animation targeting later
       }
-      onSuccess(transaction ? 'Transaction updated successfully' : `Successfully added ${payload.type}`);
+      onSuccess(
+        transaction ? 'Transaction updated successfully' : 'Transaction created successfully',
+        resultTx
+      );
     } catch (err) {
       setError(getErrorMessage(err));
       setSubmitting(false);

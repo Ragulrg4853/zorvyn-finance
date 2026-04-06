@@ -13,7 +13,8 @@ export default function TransactionTable({
   onSort, 
   sortField, 
   sortOrder,
-  onPageChange
+  onPageChange,
+  onClearFilters
 }) {
   if (loading && transactions.length === 0) {
     return (
@@ -56,8 +57,14 @@ export default function TransactionTable({
         <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-4">
           <Search size={32} className="text-gray-400 opacity-50" />
         </div>
-        <p className="text-lg font-syne font-semibold text-gray-300">No transactions found</p>
-        <p className="text-sm mt-1">Try adjusting your filters or date range.</p>
+        <p className="text-lg font-syne font-semibold text-gray-300">No transactions found for the selected date range</p>
+        <p className="text-sm mt-1 mb-4">Try adjusting your filters or date range.</p>
+        <button 
+          onClick={onClearFilters}
+          className="px-4 py-2 border border-white/20 text-white rounded hover:bg-white/10 transition-colors text-sm"
+        >
+          Clear Filters
+        </button>
       </div>
     );
   }
@@ -99,11 +106,26 @@ export default function TransactionTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5 text-sm text-gray-300">
+            <style>{`
+              @keyframes highlight-income {
+                0% { background-color: rgba(34, 197, 94, 0.4); border-color: rgba(34, 197, 94, 1); box-shadow: inset 0 0 10px rgba(34, 197, 94, 0.5); }
+                100% { background-color: transparent; border-color: transparent; box-shadow: none; }
+              }
+              @keyframes highlight-expense {
+                0% { background-color: rgba(239, 68, 68, 0.4); border-color: rgba(239, 68, 68, 1); box-shadow: inset 0 0 10px rgba(239, 68, 68, 0.5); }
+                100% { background-color: transparent; border-color: transparent; box-shadow: none; }
+              }
+            `}</style>
             {transactions.map((tx, idx) => (
               <tr 
                 key={tx.id} 
                 className="group hover:bg-white/5 transition-all duration-200"
-                style={{ animationDelay: `${idx * 30}ms`, animationFillMode: 'both' }}
+                style={{ 
+                  animationDelay: tx._isNew ? '0ms' : `${idx * 30}ms`, 
+                  animationFillMode: 'both',
+                  animationName: tx._isNew ? (tx.type === 'income' ? 'highlight-income' : 'highlight-expense') : 'none',
+                  animationDuration: tx._isNew ? '3s' : '0s'
+                }}
               >
                 {/* using native CSS animation class if added globally, or simple inline map for stagger */}
                 <td className="px-6 py-4 font-mono text-gray-500 group-hover:text-gray-300 transition-colors cursor-help" title={tx.id}>

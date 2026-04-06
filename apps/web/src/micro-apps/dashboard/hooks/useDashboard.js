@@ -1,6 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchSummary, fetchInsights, connectLiveStream } from '../services/DashboardService';
+import * as DashboardService from '../services/DashboardService';
 import { getErrorMessage } from '@/shared/lib/errorHandler';
+
+function toAPIDate(dateStr) {
+  if (!dateStr) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+  const parts = dateStr.split('-');
+  if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
+  return dateStr;
+}
 
 export function useDashboard({ dateFrom, dateTo, hasInsightsPermission }) {
   const [summary, setSummary] = useState(null);
@@ -12,11 +20,16 @@ export function useDashboard({ dateFrom, dateTo, hasInsightsPermission }) {
     try {
       setLoading(true);
       setError(null);
-      const summaryData = await fetchSummary(dateFrom, dateTo);
+
+      const params = {};
+      if (dateFrom) params.date_from = toAPIDate(dateFrom);
+      if (dateTo)   params.date_to   = toAPIDate(dateTo);
+
+      const summaryData = await DashboardService.fetchSummary(params);
       setSummary(summaryData);
 
       if (hasInsightsPermission) {
-        const insightsData = await fetchInsights(dateFrom, dateTo);
+        const insightsData = await DashboardService.fetchInsights(params);
         setInsights(insightsData);
       }
     } catch (err) {
@@ -31,7 +44,7 @@ export function useDashboard({ dateFrom, dateTo, hasInsightsPermission }) {
   }, [fetchDashboardData]);
 
   useEffect(() => {
-    const cleanup = connectLiveStream((data) => {
+    const cleanup = DashboardService.connectLiveStream((data) => {
       setSummary(data);
     });
 

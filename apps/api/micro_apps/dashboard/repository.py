@@ -11,8 +11,12 @@ def query_totals(db: Session, date_from: Optional[date] = None, date_to: Optiona
         func.count(Transaction.id).label("txn_count")
     ).filter(Transaction.is_deleted == False)
 
-    if date_from: q = q.filter(Transaction.date >= date_from)
-    if date_to:   q = q.filter(Transaction.date <= date_to)
+    if date_from and date_to:
+        q = q.filter(Transaction.date >= date_from, Transaction.date <= date_to)
+    elif date_from:
+        q = q.filter(Transaction.date >= date_from)
+    elif date_to:
+        q = q.filter(Transaction.date <= date_to)
     return q.group_by(Transaction.type).all()
 
 
@@ -24,8 +28,12 @@ def query_monthly_trends(db: Session, date_from: Optional[date] = None, date_to:
         func.sum(Transaction.amount).label('total')
     ).filter(Transaction.is_deleted == False)
     
-    if date_from: q = q.filter(Transaction.date >= date_from)
-    if date_to:   q = q.filter(Transaction.date <= date_to)
+    if date_from and date_to:
+        q = q.filter(Transaction.date >= date_from, Transaction.date <= date_to)
+    elif date_from:
+        q = q.filter(Transaction.date >= date_from)
+    elif date_to:
+        q = q.filter(Transaction.date <= date_to)
 
     return q.group_by(
         func.extract('year', Transaction.date),
@@ -36,8 +44,12 @@ def query_monthly_trends(db: Session, date_from: Optional[date] = None, date_to:
 
 def query_recent_transactions(db: Session, date_from: Optional[date] = None, date_to: Optional[date] = None, limit: int = 10) -> List[Transaction]:
     q = db.query(Transaction).filter(Transaction.is_deleted == False)
-    if date_from: q = q.filter(Transaction.date >= date_from)
-    if date_to:   q = q.filter(Transaction.date <= date_to)
+    if date_from and date_to:
+        q = q.filter(Transaction.date >= date_from, Transaction.date <= date_to)
+    elif date_from:
+        q = q.filter(Transaction.date >= date_from)
+    elif date_to:
+        q = q.filter(Transaction.date <= date_to)
     return q.order_by(Transaction.date.desc(), Transaction.id.asc()).limit(limit).all()
 
 
@@ -48,7 +60,11 @@ def query_insights(db: Session, date_from: Optional[date] = None, date_to: Optio
         func.sum(Transaction.amount).label("total")
     ).filter(Transaction.is_deleted == False)
 
-    if date_from: q = q.filter(Transaction.date >= date_from)
-    if date_to:   q = q.filter(Transaction.date <= date_to)
+    if date_from and date_to:
+        q = q.filter(Transaction.date >= date_from, Transaction.date <= date_to)
+    elif date_from:
+        q = q.filter(Transaction.date >= date_from)
+    elif date_to:
+        q = q.filter(Transaction.date <= date_to)
 
     return q.group_by(Transaction.type, Transaction.category).all()

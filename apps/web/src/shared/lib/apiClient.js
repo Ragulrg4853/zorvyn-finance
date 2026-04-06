@@ -11,42 +11,53 @@
 'use client';
 import axios from 'axios';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+if (!BASE_URL) {
+  console.error('NEXT_PUBLIC_API_URL is not set. Check environment variables.');
+}
 
 const apiClient = axios.create({
-  baseURL: BASE_URL,
+  baseURL: BASE_URL || 'http://localhost:8000',
+  timeout: 15000,
   headers: { 'Content-Type': 'application/json' },
-  timeout: 10000,
 });
 
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = typeof window !== 'undefined' ? window.__zorvyn_token : null;
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-    if (typeof window !== 'undefined') {
-      config.headers['X-Correlation-ID'] = crypto.randomUUID();
-    }
-    return config;
-  },
-  (error) => Promise.reject(error),
-);
+apiClient.interceptors.request.use((config) => {
+  if (typeof window !== 'undefined' && window.__zorvyn_token) {
+    config.headers.Authorization = `Bearer ${window.__zorvyn_token}`;
+  }
+  config.headers['X-Correlation-ID'] = 
+    (typeof crypto !== 'undefined' && crypto.randomUUID) 
+      ? crypto.randomUUID() 
+      : Math.random().toString(36).slice(2);
+  return config;
+});
 
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 && typeof window !== 'undefined') {
-      window.__zorvyn_token = null;
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
+    if (!error.response) {
+      return Promise.reject({
+        code: 'NETWORK_ERROR',
+        message: 'Unable to connect to the server. Please check your network or if the backend is running.',
+        field: null,
+      });
+    }
+    if (error.response.status === 401) {
+      if (typeof window !== 'undefined') {
+        window.__zorvyn_token = null;
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
       }
     }
     const apiError = error.response?.data?.error || {
       code: 'SYSTEM_001',
-      message: error.message || 'An unexpected error occurred',
+      message: error.response?.data?.detail?.message || 'An unexpected error occurred',
       field: null,
     };
     return Promise.reject(apiError);
-  },
+  }
 );
 
 export function setAuthToken(token) {

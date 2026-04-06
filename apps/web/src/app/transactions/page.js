@@ -24,7 +24,7 @@ import { getErrorMessage } from '@/shared/lib/errorHandler';
 
 export default function TransactionsPage() {
   const { user, hasPermission, logout } = useAuth();
-  const { transactions, loading, error, meta, filters, setFilters, refetch } = useTransactions();
+  const { transactions, setTransactions, loading, error, meta, filters, setFilters, refetch } = useTransactions();
   
   const [showForm, setShowForm] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
@@ -43,10 +43,15 @@ export default function TransactionsPage() {
     setShowForm(true);
   };
 
-  const handleSuccess = (msg) => {
+  const handleSuccess = (msg, newTx) => {
     setShowForm(false);
     setToastMessage(msg || 'Transaction mapped successfully');
-    refetch();
+    
+    if (newTx && newTx._isNew) {
+      setTransactions(prev => [newTx, ...prev]);
+    } else {
+      refetch();
+    }
   };
 
   const handleDelete = async (id) => {
@@ -72,6 +77,20 @@ export default function TransactionsPage() {
 
   const handlePageChange = (newPage) => {
     setFilters(prev => ({ ...prev, page: newPage }));
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      type: '',
+      category: '',
+      date_from: '',
+      date_to: '',
+      search: '',
+      sort: 'date',
+      order: 'desc',
+      page: 1,
+      page_size: 10,
+    });
   };
 
   return (
@@ -121,6 +140,7 @@ export default function TransactionsPage() {
               onDelete={handleDelete}
               onSort={handleSort}
               onPageChange={handlePageChange}
+              onClearFilters={handleClearFilters}
             />
           </div>
         </div>

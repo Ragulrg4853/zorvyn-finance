@@ -16,7 +16,10 @@ import { useRoles } from '../../micro-apps/admin/hooks/useRoles';
 import { UserTable } from '../../micro-apps/admin/components/UserTable';
 import { PermissionMatrix } from '../../micro-apps/admin/components/PermissionMatrix';
 import { AuditLogViewer } from '../../micro-apps/admin/components/AuditLogViewer';
+import { InviteUserModal } from '../../micro-apps/admin/components/InviteUserModal';
 import AppShell from '../../shared/components/layout/AppShell';
+import SuccessToast from '../../shared/components/ui/SuccessToast';
+import { getErrorMessage } from '@/shared/lib/errorHandler';
 import { useAuth } from '../../micro-apps/auth/hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UserPlus, Shield, Users, Activity } from 'lucide-react';
@@ -33,6 +36,8 @@ function AdminPageContent() {
 
   const urlTab = searchParams.get('tab') || 'users';
   const [activeTab, setActiveTab] = useState(urlTab);
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
   useEffect(() => {
     if (urlTab !== activeTab) {
@@ -42,18 +47,30 @@ function AdminPageContent() {
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
-    router.push(`/admin?tab=${tabId}`);
+    router.push(`/admin?tab=${tabId}`, { scroll: false });
   };
 
-  const handleEditUser = (u) => {
-    // Stub
-    console.log('Edit user:', u);
-  };
-
-  const handleDeactivate = (userId) => {
-    if (confirm('Are you sure you want to deactivate this user?')) {
-      deactivateUser(userId);
+  const handleEditUser = async (u) => {
+    try {
+      await users.updateUser(u.id, { role: u.role });
+      setToastMessage('User role updated successfully');
+    } catch (err) {
+      alert(getErrorMessage(err));
     }
+  };
+
+  const handleDeactivate = async (userId) => {
+    try {
+      await deactivateUser(userId);
+      setToastMessage('User deactivated successfully');
+    } catch (err) {
+      alert(getErrorMessage(err));
+    }
+  };
+
+  const handleCreateUser = async (payload) => {
+    await users.createUser(payload);
+    setToastMessage('User invited successfully');
   };
 
   const tabs = [
@@ -76,7 +93,7 @@ function AdminPageContent() {
             <div className="flex items-center justify-end w-full md:w-auto h-10">
               {activeTab === 'users' && hasPermission('users:write') && (
                 <button 
-                  onClick={() => console.log('Invite')}
+                  onClick={() => setInviteModalOpen(true)}
                   className="btn-primary flex items-center justify-center gap-2 h-10 px-5 border border-[var(--color-primary)] rounded-lg font-medium shadow-[0_0_15px_rgba(var(--color-primary-rgb),0.3)] hover:shadow-[0_0_25px_rgba(var(--color-primary-rgb),0.5)] transition-all bg-[var(--color-primary)] text-white whitespace-nowrap"
                 >
                   <UserPlus size={18} />
@@ -168,6 +185,13 @@ function AdminPageContent() {
           </div>
 
         </div>
+
+        <InviteUserModal 
+          open={inviteModalOpen} 
+          onClose={() => setInviteModalOpen(false)}
+          onSubmit={handleCreateUser}
+        />
+        <SuccessToast show={!!toastMessage} message={toastMessage} onClose={() => setToastMessage('')} />
       </AppShell>
     </ProtectedRoute>
   );
