@@ -4,12 +4,9 @@ import { getErrorMessage } from '@/shared/lib/errorHandler';
 import { X, AlertCircle, DollarSign, Calendar, Tag, FileText } from 'lucide-react';
 import LoadingSpinner from '../../../shared/components/feedback/LoadingSpinner';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ALL_CATEGORIES } from '../../../shared/lib/constants';
 
-const CATEGORIES = [
-  'salary', 'freelance', 'sales', 'subscriptions', 'rent', 'groceries', 
-  'dining', 'transport', 'utilities', 'entertainment', 'healthcare', 
-  'education', 'investments', 'other'
-];
+const CATEGORIES = ALL_CATEGORIES;
 
 export default function TransactionForm({ transaction, onSuccess, onCancel }) {
   const [formData, setFormData] = useState({

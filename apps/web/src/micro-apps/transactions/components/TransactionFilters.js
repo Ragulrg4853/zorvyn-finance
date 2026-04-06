@@ -2,32 +2,15 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 // Constitution: HIERARCHY.md #X (No components fetching data directly)
 import apiClient from '../../../shared/lib/apiClient';
+import { ALL_CATEGORIES } from '../../../shared/lib/constants';
 
 export default function TransactionFilters({ filters, onChange }) {
-  const [categories, setCategories] = useState([]);
+  const categories = ALL_CATEGORIES;
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   // Debounced search state
   const [searchTerm, setSearchTerm] = useState(filters.search || '');
-
-  // Fetch categories on mount
-  useEffect(() => {
-    let active = true;
-    const fetchCats = async () => {
-      try {
-        const { data } = await apiClient.get('/v1/transactions?page_size=1000');
-        if (!active) return;
-        const txs = data.data || [];
-        const cats = Array.from(new Set(txs.map(t => t.category?.toLowerCase()?.trim()).filter(Boolean))).sort();
-        setCategories(cats);
-      } catch (err) {
-        console.error('Failed to fetch categories', err);
-      }
-    };
-    fetchCats();
-    return () => { active = false; };
-  }, []);
 
   // Debounce search
   useEffect(() => {

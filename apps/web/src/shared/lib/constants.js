@@ -21,8 +21,9 @@ export const PERMISSIONS = Object.freeze({
 
 export const TRANSACTION_TYPES = Object.freeze({ INCOME: 'income', EXPENSE: 'expense' });
 
-export const INCOME_CATEGORIES  = Object.freeze(['Salary','Freelance','Investment','Dividend','Rental','Other Income']);
-export const EXPENSE_CATEGORIES = Object.freeze(['Utilities','Rent','Food','Transport','Healthcare','Entertainment','Other Expense']);
+export const INCOME_CATEGORIES  = Object.freeze(['Salary', 'Freelance', 'Sales', 'Investments', 'Other']);
+export const EXPENSE_CATEGORIES = Object.freeze(['Subscriptions', 'Rent', 'Groceries', 'Dining', 'Transport', 'Utilities', 'Entertainment', 'Healthcare', 'Education', 'Other']);
+export const ALL_CATEGORIES = Object.freeze([...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES]);
 
 export const DEFAULT_PAGE_SIZE = 20;
 export const MAX_PAGE_SIZE     = 100;
