@@ -18,6 +18,8 @@ from shared.utils.error_taxonomy import AppError, ErrorCode
 from shared.utils.validators import validate_date_range
 from fastapi import status
 
+router = APIRouter()
+
 from pydantic import BaseModel, ConfigDict, field_validator
 import json
 
