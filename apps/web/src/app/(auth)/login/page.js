@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/micro-apps/auth/hooks/useAuth';
 import { Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -11,6 +11,15 @@ export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [authToast, setAuthToast] = useState('');
+
+  useEffect(() => {
+    const toast = sessionStorage.getItem('auth_toast');
+    if (toast) {
+      setAuthToast(toast);
+      sessionStorage.removeItem('auth_toast');
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -80,8 +89,11 @@ export default function LoginPage() {
               </button>
             </div>
           </div>
-
-          {error && (
+          {authToast && !error && (
+            <div style={{ background: '#0c1222', border: '1px solid var(--color-primary)', color: 'var(--color-primary)', padding: '0.75rem', borderRadius: 'var(--radius-btn)', fontSize: '0.875rem', textAlign: 'center' }}>
+              {authToast}
+            </div>
+          )}          {error && (
             <div style={{ background: 'var(--color-error)', color: '#fff', padding: '0.75rem', borderRadius: 'var(--radius-btn)', fontSize: '0.875rem', textAlign: 'center' }}>
               {error}
             </div>

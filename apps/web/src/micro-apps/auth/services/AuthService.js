@@ -2,7 +2,34 @@
  * AuthService — all auth API calls.
  * Constitution: CLAUDE.md #66 (services handle API, never components)
  */
-import apiClient, { setAuthToken, clearAuthToken } from '@/shared/lib/apiClient';
+import apiClient from '@/shared/lib/apiClient';
+
+export function setAuthToken(token) {
+  if (typeof window !== 'undefined') {
+    window.__zorvyn_token = token;
+    sessionStorage.setItem('zorvyn_token', token);
+  }
+}
+
+export function clearAuthToken() {
+  if (typeof window !== 'undefined') {
+    window.__zorvyn_token = null;
+    sessionStorage.removeItem('zorvyn_token');
+  }
+  clearUserCache();
+}
+
+export function restoreToken() {
+  if (typeof window !== 'undefined') {
+    const saved = sessionStorage.getItem('zorvyn_token');
+    if (saved) window.__zorvyn_token = saved;
+    return saved;
+  }
+  return null;
+}
+
+// Proactively restore token on load to prevent race conditions in concurrent hooks
+restoreToken();
 
 export async function login(username, password) {
   const formData = new URLSearchParams({ username, password });
@@ -23,7 +50,36 @@ export async function logout() {
   try { await apiClient.post('/v1/auth/logout'); } finally { clearAuthToken(); }
 }
 
-export async function getCurrentUser() {
-  const response = await apiClient.get('/v1/auth/me');
-  return response.data.data;
+let userPromise = null;
+let cachedUser = null;
+
+export async function getCurrentUser(forceRefetch = false) {
+  if (cachedUser && !forceRefetch) return cachedUser;
+  if (userPromise) return userPromise;
+
+  userPromise = apiClient.get('/v1/auth/me')
+    .then(response => {
+      cachedUser = response.data.data;
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('auth_changed', { detail: cachedUser }));
+      }
+      return cachedUser;
+    })
+    .finally(() => {
+      userPromise = null;
+    });
+
+  return userPromise;
+}
+
+export function getCachedUser() {
+  return cachedUser;
+}
+
+export function clearUserCache() {
+  cachedUser = null;
+  userPromise = null;
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('auth_changed', { detail: null }));
+  }
 }

@@ -29,18 +29,21 @@ export default function ProtectedRoute({ children, requiredPermission }) {
 
   if (requiredPermission && !hasPermission(requiredPermission)) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', width: '100%' }}>
-        <div className="card" style={{ padding: '2rem', maxWidth: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '1rem' }}>
-          <Lock size={48} color="var(--color-error)" />
-          <h2 style={{ fontFamily: '"Syne", sans-serif', color: 'var(--color-text-1)', margin: 0 }}>
+      <div className="flex justify-center items-center h-full w-full p-6 animate-in fade-in duration-500">
+        <div className="card glass-effect flex flex-col items-center text-center gap-4 max-w-md w-full p-8 border border-[var(--color-border)] shadow-2xl relative overflow-hidden backdrop-blur-xl bg-[rgba(10,15,30,0.5)]">
+          <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-red-500 to-transparent opacity-50"></div>
+          <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center border border-red-500/20 mb-2">
+            <Lock size={32} className="text-red-400" />
+          </div>
+          <h2 className="font-syne text-2xl font-bold text-gray-100 m-0">
             Access Restricted
           </h2>
-          <p style={{ color: 'var(--color-text-2)', margin: 0, lineHeight: 1.5 }}>
-            You need higher access level to view this page.
+          <p className="text-gray-400 text-sm m-0 leading-relaxed max-w-[280px]">
+            This section requires <strong className="text-gray-200">`{requiredPermission}`</strong> access.
           </p>
-          <button onClick={() => router.back()} className="btn-ghost" style={{ marginTop: '0.5rem' }}>
-            Go Back
-          </button>
+          <p className="text-gray-500 text-xs m-0 mt-2">
+            Contact your administrator to request access
+          </p>
         </div>
       </div>
     );

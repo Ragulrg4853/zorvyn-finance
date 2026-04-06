@@ -1,13 +1,17 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { Lock, Shield, User, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { invalidateCache } from '../services/RoleService';
 
 export function PermissionMatrix({ roles, permissions, onChangePermissions, loading }) {
   const [localRoles, setLocalRoles] = useState([]);
   const [toast, setToast] = useState(null);
+  const [pendingChanges, setPendingChanges] = useState({});
+  const [isCommitting, setIsCommitting] = useState(false);
 
   useEffect(() => {
     setLocalRoles(roles || []);
+    setPendingChanges({});
   }, [roles]);
 
   const showToast = (message, type = 'success') => {
@@ -36,34 +40,59 @@ export function PermissionMatrix({ roles, permissions, onChangePermissions, load
     return `${shortDomain} ${capitalizedAction}`;
   };
 
-  const handleToggle = async (roleId, currRole, perm) => {
+  const handleToggle = (roleId, currRole, perm) => {
     if (currRole.name === 'admin') return;
 
-    const hasPerm = currRole.permissions?.some((p) => p.id === perm.id);
-    
-    // Optimistic update
-    const newPermissions = hasPerm 
-      ? currRole.permissions.filter((p) => p.id !== perm.id)
-      : [...(currRole.permissions || []), perm];
-      
-    const updatedRoles = localRoles.map((r) => 
-      r.id === roleId ? { ...r, permissions: newPermissions } : r
-    );
-    setLocalRoles(updatedRoles);
+    const originalRole = roles.find((r) => r.id === roleId);
+    const originalHasPerm = originalRole?.permissions?.some((p) => p.id === perm.id);
 
-    try {
-      if (hasPerm) {
-        await onChangePermissions(roleId, { revoke: [perm.id], grant: [] });
+    setPendingChanges((prev) => {
+      const roleChanges = prev[roleId] || { grant: [], revoke: [] };
+      const newChanges = { grant: [...roleChanges.grant], revoke: [...roleChanges.revoke] };
+
+      const granting = newChanges.grant.includes(perm.id);
+      const revoking = newChanges.revoke.includes(perm.id);
+
+      if (granting) {
+        newChanges.grant = newChanges.grant.filter(id => id !== perm.id);
+      } else if (revoking) {
+        newChanges.revoke = newChanges.revoke.filter(id => id !== perm.id);
       } else {
-        await onChangePermissions(roleId, { grant: [perm.id], revoke: [] });
+        if (originalHasPerm) {
+          newChanges.revoke.push(perm.id);
+        } else {
+          newChanges.grant.push(perm.id);
+        }
       }
-      showToast('Permission updated successfully', 'success');
+
+      const updated = { ...prev };
+      if (newChanges.grant.length === 0 && newChanges.revoke.length === 0) {
+        delete updated[roleId];
+      } else {
+        updated[roleId] = newChanges;
+      }
+      return updated;
+    });
+  };
+
+  const commitChanges = async () => {
+    setIsCommitting(true);
+    try {
+      const commitPromises = Object.entries(pendingChanges).map(([roleId, changes]) =>
+        onChangePermissions(roleId, changes)
+      );
+      await Promise.all(commitPromises);
+      await invalidateCache();
+      setPendingChanges({});
+      showToast('Permissions updated. Changes effective within 2 minutes.', 'success');
     } catch (err) {
-      // Revert on error
-      setLocalRoles(roles || []);
-      showToast(err?.message || 'Failed to update permission', 'error');
+      showToast(err?.message || 'Failed to update permissions', 'error');
+    } finally {
+      setIsCommitting(false);
     }
   };
+
+  const pendingCount = Object.values(pendingChanges).reduce((acc, curr) => acc + curr.grant.length + curr.revoke.length, 0);
 
   return (
     <div className="h-full flex flex-col w-full overflow-hidden animate-in fade-in duration-500 relative">
@@ -131,7 +160,17 @@ export function PermissionMatrix({ roles, permissions, onChangePermissions, load
                   
                   {permissions?.map((perm) => {
                     const isAdmin = role.name === 'admin';
-                    const hasPerm = isAdmin || role.permissions?.some((p) => p.id === perm.id);
+                    
+                    const originalHasPerm = roles?.find(r => r.id === role.id)?.permissions?.some((p) => p.id === perm.id);
+                    const changes = pendingChanges[role.id] || { grant: [], revoke: [] };
+                    
+                    let hasPerm = originalHasPerm;
+                    if (changes.grant.includes(perm.id)) hasPerm = true;
+                    if (changes.revoke.includes(perm.id)) hasPerm = false;
+                    
+                    if (isAdmin) hasPerm = true;
+
+                    const isPending = changes.grant.includes(perm.id) || changes.revoke.includes(perm.id);
                     
                     return (
                       <td key={perm.id} className="px-4 py-4 text-center border-l border-white/5 relative">
@@ -139,11 +178,13 @@ export function PermissionMatrix({ roles, permissions, onChangePermissions, load
                           className={`inline-flex relative items-center justify-center w-6 h-6 rounded border transition-colors ${
                             isAdmin 
                               ? 'bg-teal-500/20 border-teal-500/40 cursor-not-allowed opacity-80' 
-                              : hasPerm 
-                                ? 'bg-[var(--color-primary)] border-[var(--color-primary)] cursor-pointer hover:border-[var(--color-primary-light)]' 
-                                : 'bg-black/20 border-white/20 cursor-pointer hover:border-[var(--color-primary-light)]'
+                              : isPending
+                                ? 'bg-amber-500/40 border-amber-500/60 cursor-pointer shadow-[0_0_8px_rgba(245,158,11,0.5)] hover:border-amber-400'
+                                : hasPerm 
+                                  ? 'bg-[var(--color-primary)] border-[var(--color-primary)] cursor-pointer hover:border-[var(--color-primary-light)]' 
+                                  : 'bg-black/20 border-white/20 cursor-pointer hover:border-[var(--color-primary-light)]'
                           }`}
-                          title={isAdmin ? "Admin has all permissions — cannot be modified" : ""}
+                          title={isAdmin ? "Admin has all permissions — cannot be modified" : (isPending ? "Pending change" : "")}
                         >
                           <input
                             type="checkbox"
@@ -169,6 +210,33 @@ export function PermissionMatrix({ roles, permissions, onChangePermissions, load
           </table>
         </div>
       </div>
+
+      <AnimatePresence>
+        {pendingCount > 0 && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            exit={{ opacity: 0, y: 20 }}
+            className="px-6 py-4 flex justify-between items-center bg-[#0c1222] border-t border-[var(--color-border)] sticky bottom-0 z-20"
+          >
+            <div className="flex items-center gap-2 text-amber-400 font-medium text-sm">
+              <AlertCircle size={18} />
+              <span>You have {pendingCount} unsaved changes</span>
+            </div>
+            <button
+              onClick={commitChanges}
+              disabled={isCommitting}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-white font-bold text-sm transition-all
+                ${isCommitting 
+                  ? 'bg-teal-600/50 cursor-not-allowed' 
+                  : 'bg-teal-500 hover:bg-teal-400 shadow-[0_0_15px_rgba(20,184,166,0.4)] animate-pulse'
+                }`}
+            >
+              {isCommitting ? 'Committing...' : `Commit ${pendingCount} Changes`}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

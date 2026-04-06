@@ -3,6 +3,27 @@ import { format } from 'date-fns';
 import { Pencil, Trash2, ArrowUp, ArrowDown, Search } from 'lucide-react';
 import { formatCurrency } from '@/shared/utils/formatters';
 
+const SortableHeader = ({ field, label, sortField, sortOrder, onSort }) => {
+  const isActive = sortField === field;
+  return (
+    <th 
+      className="px-6 py-4 cursor-pointer hover:bg-white/5 transition-colors select-none group"
+      onClick={() => onSort(field)}
+    >
+      <div className="flex items-center gap-1 group-hover:text-gray-200">
+        {label}
+        <div className="w-4 flex justify-center ml-1">
+          {isActive ? (
+            sortOrder === 'asc' ? <ArrowUp size={14} className="text-[var(--color-primary)]" /> : <ArrowDown size={14} className="text-[var(--color-primary)]" />
+          ) : (
+            <ArrowUp size={14} className="opacity-0 group-hover:opacity-30 transition-opacity" />
+          )}
+        </div>
+      </div>
+    </th>
+  );
+};
+
 const TransactionTable = ({ 
   transactions, 
   loading, 
@@ -15,9 +36,10 @@ const TransactionTable = ({
   sortField, 
   sortOrder,
   onPageChange,
+  onPageSizeChange,
   onClearFilters
-}) {
-  if (loading && transactions.length === 0) {
+}) => {
+  if (loading && (!transactions || transactions.length === 0)) {
     return (
       <div className="h-full flex flex-col w-full overflow-hidden relative">
         <div className="overflow-auto flex-1">
@@ -70,53 +92,32 @@ const TransactionTable = ({
     );
   }
 
-  const SortableHeader = ({ field, label }) => {
-    const isActive = sortField === field;
-    return (
-      <th 
-        className="px-6 py-4 cursor-pointer hover:bg-white/5 transition-colors select-none group"
-        onClick={() => onSort(field)}
-      >
-        <div className="flex items-center gap-1 group-hover:text-gray-200">
-          {label}
-          <div className="w-4 flex justify-center ml-1">
-            {isActive ? (
-              sortOrder === 'asc' ? <ArrowUp size={14} className="text-[var(--color-primary)]" /> : <ArrowDown size={14} className="text-[var(--color-primary)]" />
-            ) : (
-              <ArrowUp size={14} className="opacity-0 group-hover:opacity-30 transition-opacity" />
-            )}
-          </div>
-        </div>
-      </th>
-    );
-  };
-
   return (
     <div className="h-full flex flex-col w-full max-w-full animate-in fade-in duration-500 overflow-x-hidden">
+      <style>{`
+        @keyframes highlight-income {
+          0% { background-color: rgba(34, 197, 94, 0.4); border-color: rgba(34, 197, 94, 1); box-shadow: inset 0 0 10px rgba(34, 197, 94, 0.5); }
+          100% { background-color: transparent; border-color: transparent; box-shadow: none; }
+        }
+        @keyframes highlight-expense {
+          0% { background-color: rgba(239, 68, 68, 0.4); border-color: rgba(239, 68, 68, 1); box-shadow: inset 0 0 10px rgba(239, 68, 68, 0.5); }
+          100% { background-color: transparent; border-color: transparent; box-shadow: none; }
+        }
+      `}</style>
       <div className="overflow-x-auto overflow-y-auto flex-1 relative hide-scrollbars-on-mobile custom-scrollbar w-full max-w-full">
         <table className="w-full text-left whitespace-nowrap min-w-[800px] border-collapse">
           <thead className="sticky top-0 z-20 bg-[rgba(12,18,34,0.95)] backdrop-blur-xl border-b border-[var(--color-border)] text-[11px] text-gray-400 uppercase tracking-[0.1em] font-syne font-semibold shadow-sm after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[1px] after:bg-white/10">
             <tr>
               <th className="px-6 py-4">ID</th>
-              <SortableHeader field="date" label="Date" />
+              <SortableHeader field="date" label="Date" sortField={sortField} sortOrder={sortOrder} onSort={onSort} />
               <th className="px-6 py-4">Type</th>
-              <SortableHeader field="category" label="Category" />
-              <SortableHeader field="amount" label="Amount" />
+              <SortableHeader field="category" label="Category" sortField={sortField} sortOrder={sortOrder} onSort={onSort} />
+              <SortableHeader field="amount" label="Amount" sortField={sortField} sortOrder={sortOrder} onSort={onSort} />
               <th className="px-6 py-4">Notes</th>
               {canWrite && <th className="px-6 py-4 text-right">Actions</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5 text-sm text-gray-300">
-            <style>{`
-              @keyframes highlight-income {
-                0% { background-color: rgba(34, 197, 94, 0.4); border-color: rgba(34, 197, 94, 1); box-shadow: inset 0 0 10px rgba(34, 197, 94, 0.5); }
-                100% { background-color: transparent; border-color: transparent; box-shadow: none; }
-              }
-              @keyframes highlight-expense {
-                0% { background-color: rgba(239, 68, 68, 0.4); border-color: rgba(239, 68, 68, 1); box-shadow: inset 0 0 10px rgba(239, 68, 68, 0.5); }
-                100% { background-color: transparent; border-color: transparent; box-shadow: none; }
-              }
-            `}</style>
             {transactions.map((tx, idx) => (
               <tr 
                 key={tx.id} 
@@ -188,22 +189,38 @@ const TransactionTable = ({
       <div className="pointer-events-none absolute top-[52px] left-0 w-full h-8 bg-gradient-to-b from-[#0c1222] to-transparent z-10 hidden" />
       <div className="pointer-events-none absolute bottom-[60px] left-0 w-full h-12 bg-gradient-to-t from-[rgba(10,15,30,0.8)] to-transparent z-10" />
 
-      {meta && meta.total_pages > 1 && (
-        <div className="px-6 py-4 bg-[rgba(12,18,34,0.95)] backdrop-blur-md border-t border-[var(--color-border)] flex flex-wrap items-center justify-between text-sm gap-4 relative z-20 shrink-0">
-          <span className="text-gray-400 font-mono text-xs">
-            Showing Page <span className="text-white font-bold">{meta.page || meta.current_page || 1}</span> of <span className="text-white font-bold">{meta.total_pages}</span>
+      {meta && (
+        <div className="px-6 py-4 bg-[rgba(12,18,34,0.95)] backdrop-blur-md border-t border-[var(--color-border)] flex flex-col md:flex-row items-center justify-between text-sm gap-4 relative z-20 shrink-0">
+          <div className="flex items-center gap-3">
+            <span className="text-gray-400 font-mono text-xs hidden sm:inline-block">Show per page:</span>
+            <select 
+              value={meta.page_size || 10}
+              onChange={(e) => onPageSizeChange(Number(e.target.value))}
+              className="bg-white/5 border border-white/10 text-white rounded text-xs px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer hover:bg-white/10 transition-colors"
+            >
+              {[10, 25, 50, 100].map(size => <option key={size} value={size} className="bg-[#0c1222] text-white">Show {size}</option>)}
+            </select>
+          </div>
+          
+          <span className="text-gray-400 font-mono text-xs text-center flex-1">
+            Showing <span className="text-white font-bold">{Math.min(((meta.page || meta.current_page || 1) - 1) * (meta.page_size || 10) + 1, meta.total || 0)}</span> - <span className="text-white font-bold">{Math.min((meta.page || meta.current_page || 1) * (meta.page_size || 10), meta.total || 0)}</span> of <span className="text-white font-bold">{meta.total || 0}</span> records
           </span>
+
+          <div className="flex items-center gap-2 font-mono text-xs text-gray-400 mr-2">
+            Page <span className="text-white font-bold">{meta.page || meta.current_page || 1}</span> of <span className="text-white font-bold">{meta.total_pages || 1}</span>
+          </div>
+          
           <div className="flex items-center gap-2">
             <button 
-              className="h-8 px-4 rounded-lg bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-all text-xs font-semibold tracking-wider uppercase"
+              className="h-8 px-4 rounded-lg bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-all text-xs font-semibold tracking-wider uppercase border border-transparent disabled:border-white/5"
               disabled={(meta.page || meta.current_page || 1) === 1}
               onClick={() => onPageChange((meta.page || meta.current_page || 1) - 1)}
             >
               Prev
             </button>
             <button 
-              className="h-8 px-4 rounded-lg bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-all text-xs font-semibold tracking-wider uppercase"
-              disabled={(meta.page || meta.current_page || 1) === meta.total_pages}
+              className="h-8 px-4 rounded-lg bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-all text-xs font-semibold tracking-wider uppercase border border-transparent disabled:border-white/5"
+              disabled={(meta.page || meta.current_page || 1) >= (meta.total_pages || 1)}
               onClick={() => onPageChange((meta.page || meta.current_page || 1) + 1)}
             >
               Next

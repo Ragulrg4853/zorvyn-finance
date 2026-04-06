@@ -8,7 +8,7 @@ Constitution: CLAUDE.md #72, #73, #74
 """
 import pytest
 from unittest.mock import MagicMock
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 
 from micro_apps.audit.router import get_logs
@@ -29,7 +29,7 @@ class TestGetLogs:
         item.new_value = None
         item.ip_address = "1.1.1.1"
         item.correlation_id = "corr_123"
-        item.created_at = datetime.utcnow()
+        item.created_at = datetime.now(timezone.utc)
         
         q_mock.order_by.return_value.offset.return_value.limit.return_value.all.return_value = [item]
         

@@ -46,6 +46,19 @@ apiClient.interceptors.response.use(
     if (error.response.status === 401) {
       if (typeof window !== 'undefined') {
         window.__zorvyn_token = null;
+        sessionStorage.removeItem('zorvyn_token');
+        window.dispatchEvent(new CustomEvent('auth_changed', { detail: null }));
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+      }
+    }
+    if (error.response.status === 403) {
+      if (typeof window !== 'undefined') {
+        window.__zorvyn_token = null;
+        sessionStorage.removeItem('zorvyn_token');
+        window.dispatchEvent(new CustomEvent('auth_changed', { detail: null }));
+        sessionStorage.setItem('auth_toast', 'Your permissions have been updated. Please log in again.');
         if (window.location.pathname !== '/login') {
           window.location.href = '/login';
         }
@@ -59,12 +72,5 @@ apiClient.interceptors.response.use(
     return Promise.reject(apiError);
   }
 );
-
-export function setAuthToken(token) {
-  if (typeof window !== 'undefined') window.__zorvyn_token = token;
-}
-export function clearAuthToken() {
-  if (typeof window !== 'undefined') window.__zorvyn_token = null;
-}
 
 export default apiClient;

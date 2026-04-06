@@ -17,14 +17,14 @@ from shared.models.user import User
 from shared.models.transaction import TransactionType
 from shared.utils.error_taxonomy import AppError, ErrorCode
 from shared.utils.validators import validate_date_range, calculate_total_pages
-from micro_apps.transactions import service as txn_service
+from micro_apps.transactions import service as transaction_service
 from micro_apps.transactions.schemas import TransactionCreate, TransactionUpdate
 
 router = APIRouter()
 
 @router.get("/export", summary="Export transactions as CSV [transactions:export]")
 def export_transactions(
-    txn_type:  Optional[TransactionType] = Query(None, alias="type"),
+    transaction_type:  Optional[TransactionType] = Query(None, alias="type"),
     category:  Optional[str]  = None,
     date_from: Optional[date] = None,
     date_to:   Optional[date] = None,
@@ -35,8 +35,8 @@ def export_transactions(
     """Streams CSV download. Analyst and admin only."""
     validate_date_range(date_from, date_to)
     return StreamingResponse(
-        txn_service.stream_transactions_csv(
-            db=db, txn_type=txn_type, category=category,
+        transaction_service.stream_transactions_csv(
+            db=db, transaction_type=transaction_type, category=category,
             date_from=date_from, date_to=date_to, search=search,
         ),
         media_type="text/csv",
@@ -46,7 +46,7 @@ def export_transactions(
 
 @router.get("", summary="List transactions [transactions:read]")
 def list_transactions(
-    txn_type:  Optional[TransactionType] = Query(None, alias="type"),
+    transaction_type:  Optional[TransactionType] = Query(None, alias="type"),
     category:  Optional[str]  = None,
     date_from: Optional[date] = None,
     date_to:   Optional[date] = None,
@@ -60,8 +60,8 @@ def list_transactions(
     correlation_id: str = Depends(get_correlation_id),
 ):
     validate_date_range(date_from, date_to)
-    items, total = txn_service.list_transactions(
-        db=db, txn_type=txn_type, category=category,
+    items, total = transaction_service.list_transactions(
+        db=db, transaction_type=transaction_type, category=category,
         date_from=date_from, date_to=date_to, search=search,
         sort=sort, order=order, page=page, page_size=page_size,
     )
@@ -82,8 +82,9 @@ def create_transaction(
     current_user: User = Depends(require_permission("transactions:write")),
     correlation_id: str = Depends(get_correlation_id),
 ):
-    result = txn_service.create_transaction(db=db, payload=payload,
-                                            created_by=current_user.id)
+    result = transaction_service.create_transaction(db=db, payload=payload,
+                                            current_user=current_user,
+                                            correlation_id=correlation_id)
     return {"data": result.model_dump(), "meta": {"correlation_id": correlation_id},
             "error": None}
 
@@ -95,7 +96,7 @@ def get_transaction(
     _: User = Depends(require_permission("transactions:read")),
     correlation_id: str = Depends(get_correlation_id),
 ):
-    result = txn_service.get_transaction(db=db, transaction_id=transaction_id)
+    result = transaction_service.get_transaction(db=db, transaction_id=transaction_id)
     return {"data": result.model_dump(), "meta": {"correlation_id": correlation_id},
             "error": None}
 
@@ -105,11 +106,13 @@ def update_transaction(
     transaction_id: UUID,
     payload: TransactionUpdate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_permission("transactions:write")),
+    current_user: User = Depends(require_permission("transactions:write")),
     correlation_id: str = Depends(get_correlation_id),
 ):
-    result = txn_service.update_transaction(db=db, transaction_id=transaction_id,
-                                            payload=payload)
+    result = transaction_service.update_transaction(db=db, transaction_id=transaction_id,
+                                            payload=payload,
+                                            current_user=current_user,
+                                            correlation_id=correlation_id)
     return {"data": result.model_dump(), "meta": {"correlation_id": correlation_id},
             "error": None}
 
@@ -119,7 +122,8 @@ def update_transaction(
 def delete_transaction(
     transaction_id: UUID,
     db: Session = Depends(get_db),
-    _: User = Depends(require_permission("transactions:delete")),
+    current_user: User = Depends(require_permission("transactions:delete")),
+    correlation_id: str = Depends(get_correlation_id),
 ):
-    txn_service.delete_transaction(db=db, transaction_id=transaction_id)
+    transaction_service.delete_transaction(db=db, transaction_id=transaction_id, current_user=current_user, correlation_id=correlation_id)
     return None

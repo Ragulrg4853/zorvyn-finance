@@ -8,7 +8,7 @@ def query_totals(db: Session, date_from: Optional[date] = None, date_to: Optiona
     q = db.query(
         Transaction.type,
         func.sum(Transaction.amount).label("total_sum"),
-        func.count(Transaction.id).label("txn_count")
+        func.count(Transaction.id).label("transaction_count")
     ).filter(Transaction.is_deleted == False)
 
     if date_from and date_to:

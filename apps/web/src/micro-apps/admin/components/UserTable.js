@@ -1,11 +1,11 @@
 import React from 'react';
-import { Search, Shield, User, Users, AlertCircle, Info, Ban, Edit2 } from 'lucide-react';
+import { Search, Shield, User, Users, AlertCircle, Info, Ban, Edit2, UserPlus, Check } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuth } from '../../auth/hooks/useAuth';
 import ErrorState from '../../../shared/components/feedback/ErrorState';
 
-export function UserTable({ users, loading, onEdit, onDeactivate, filters, onFilterChange, meta, error }) {
-  const { user: currentUser } = useAuth();
+export function UserTable({ users, loading, onRoleChange, onToggleActive, filters, onFilterChange, meta, error, onCreateUser }) {
+  const { user: currentUser, hasPermission } = useAuth();
 
   if (error) {
     return <ErrorState message={error} onRetry={() => onFilterChange({ ...filters })} />;
@@ -47,7 +47,7 @@ export function UserTable({ users, loading, onEdit, onDeactivate, filters, onFil
     <div className="h-full flex flex-col w-full overflow-hidden animate-in fade-in duration-500">
       
       {/* Search Toolbar */}
-      <div className="px-6 py-4 border-b border-[var(--color-border)] bg-[rgba(12,18,34,0.95)] sticky top-0 z-20 backdrop-blur-xl flex items-center justify-between shrink-0">
+      <div className="px-6 py-4 border-b border-[var(--color-border)] bg-[rgba(12,18,34,0.95)] sticky top-0 z-20 backdrop-blur-xl flex items-center justify-between shrink-0 gap-4">
         <div className="relative w-full max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
           <input 
@@ -58,6 +58,16 @@ export function UserTable({ users, loading, onEdit, onDeactivate, filters, onFil
             className="w-full h-9 pl-9 pr-4 bg-white/5 border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all"
           />
         </div>
+        
+        {hasPermission('users:write') && onCreateUser && (
+          <button 
+            className="btn-primary flex items-center justify-center gap-2 h-9 px-4 rounded-lg font-medium bg-[var(--color-primary)] text-white text-sm whitespace-nowrap shadow-[0_0_10px_rgba(var(--color-primary-rgb),0.3)] hover:shadow-[0_0_15px_rgba(var(--color-primary-rgb),0.5)] transition-all shrink-0"
+            onClick={onCreateUser}
+          >
+            <UserPlus size={16} />
+            + Create User
+          </button>
+        )}
       </div>
 
       {(!loading && (!users || users.length === 0)) ? (
@@ -137,19 +147,31 @@ export function UserTable({ users, loading, onEdit, onDeactivate, filters, onFil
                           className="h-8 px-2 rounded-md bg-white/5 border border-white/10 text-gray-300 text-xs font-semibold uppercase tracking-wide focus:outline-none focus:border-[var(--color-primary)] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                           value={usr.role}
                           disabled={isSelf}
-                          onChange={(e) => onEdit({ ...usr, role: e.target.value })}
+                          onChange={(e) => onRoleChange(usr.id, e.target.value)}
                         >
                           <option value="viewer" className="bg-[#0c1222]">Viewer</option>
                           <option value="analyst" className="bg-[#0c1222]">Analyst</option>
                           <option value="admin" className="bg-[#0c1222]">Admin</option>
                         </select>
-                        {usr.is_active && (
+                        {usr.is_active ? (
                           <button 
-                            onClick={() => onDeactivate(usr.id)} 
+                            onClick={() => {
+                              if (window.confirm(`Deactivate ${usr.username}? They will lose access immediately.`)) {
+                                onToggleActive(usr.id, false);
+                              }
+                            }} 
                             disabled={isSelf}
-                            className="h-8 px-3 rounded-md flex items-center justify-center gap-2 bg-white/5 hover:bg-red-500/80 hover:text-white text-gray-400 disabled:opacity-30 disabled:hover:bg-white/5 transition-all text-xs font-semibold tracking-wide uppercase" 
+                            className="h-8 px-3 rounded-md flex items-center justify-center gap-2 bg-white/5 border border-red-500/50 hover:bg-red-500/80 hover:text-white text-red-400 disabled:opacity-30 disabled:hover:bg-white/5 transition-all text-xs font-semibold tracking-wide uppercase" 
                           >
                             <Ban size={12} /> Deactivate
+                          </button>
+                        ) : (
+                          <button 
+                            onClick={() => onToggleActive(usr.id, true)} 
+                            disabled={isSelf}
+                            className="h-8 px-3 rounded-md flex items-center justify-center gap-2 bg-white/5 border border-green-500/50 hover:bg-green-500/80 hover:text-white text-green-400 disabled:opacity-30 disabled:hover:bg-white/5 transition-all text-xs font-semibold tracking-wide uppercase" 
+                          >
+                            <Check size={12} /> Activate
                           </button>
                         )}
                       </div>

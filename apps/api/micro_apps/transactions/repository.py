@@ -11,12 +11,12 @@ from sqlalchemy.orm import Session
 from shared.models.transaction import Transaction, TransactionType
 
 
-def create(db: Session, amount, txn_type: TransactionType, category: str,
-           txn_date: date, notes: Optional[str], created_by: UUID) -> Transaction:
+def create(db: Session, amount, transaction_type: TransactionType, category: str,
+           transaction_date: date, notes: Optional[str], created_by: UUID) -> Transaction:
     """Persists a new transaction. Pure DB operation — no business logic."""
     record = Transaction(
-        amount=amount, type=txn_type, category=category,
-        date=txn_date, notes=notes, created_by=created_by,
+        amount=amount, type=transaction_type, category=category,
+        date=transaction_date, notes=notes, created_by=created_by,
     )
     db.add(record)
     db.commit()
@@ -32,7 +32,7 @@ def get_by_id(db: Session, transaction_id: UUID) -> Optional[Transaction]:
     ).first()
 
 
-def list_filtered(db: Session, txn_type=None, category=None, date_from=None,
+def list_filtered(db: Session, transaction_type=None, category=None, date_from=None,
                   date_to=None, search=None, sort="date", order="desc",
                   page=1, page_size=20) -> tuple[list, int]:
     """
@@ -40,7 +40,7 @@ def list_filtered(db: Session, txn_type=None, category=None, date_from=None,
     All filters are additive AND logic.
     """
     q = db.query(Transaction).filter(Transaction.is_deleted == False)
-    if txn_type:    q = q.filter(Transaction.type == txn_type)
+    if transaction_type:    q = q.filter(Transaction.type == transaction_type)
     if category:    q = q.filter(Transaction.category.ilike(f"%{category}%"))
     if date_from and date_to:
         q = q.filter(Transaction.date >= date_from, Transaction.date <= date_to)
@@ -60,14 +60,14 @@ def list_filtered(db: Session, txn_type=None, category=None, date_from=None,
     return items, total
 
 
-def stream_filtered(db: Session, txn_type=None, category=None, date_from=None,
+def stream_filtered(db: Session, transaction_type=None, category=None, date_from=None,
                     date_to=None, search=None, sort="date", order="desc"):
     """
     Returns an ORM query generator for O(1) space streaming export.
     Constitution: O(1) space complexity on huge datasets.
     """
     q = db.query(Transaction).filter(Transaction.is_deleted == False)
-    if txn_type:    q = q.filter(Transaction.type == txn_type)
+    if transaction_type:    q = q.filter(Transaction.type == transaction_type)
     if category:    q = q.filter(Transaction.category.ilike(f"%{category}%"))
     if date_from and date_to:
         q = q.filter(Transaction.date >= date_from, Transaction.date <= date_to)

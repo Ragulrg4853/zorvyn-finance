@@ -1,8 +1,8 @@
-/**
- * Admin page — user management, admin only.
+﻿/**
+ * Admin page â€” user management, admin only.
  * Copilot Session 14: Implement per COPILOT_GUIDE.md Session 14 direction.
  *
- * Layout: Navbar + "User Management" heading + "Invite User" button
+ * Layout: Navbar + "User Management" heading + "Create User" button
  *         + UserTable with role badges, status badges, action column
  * Guards: disable own row's action buttons, "Manage Permissions" link to /admin/roles
  * Data: useUsers() hook
@@ -26,12 +26,14 @@ import { UserPlus, Shield, Users, Activity } from 'lucide-react';
 import LoadingSpinner from '../../shared/components/feedback/LoadingSpinner';
 import { useSearchParams, useRouter } from 'next/navigation';
 
+import * as UserService from '../../micro-apps/admin/services/UserService';
+
 function AdminPageContent() {
   const { user, hasPermission, logout } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
   
-  const { users, loading: usersLoading, error: usersError, meta: usersMeta, filters: userFilters, setFilters: setUserFilters, deactivateUser } = useUsers();
+  const { users, setUsers, loading: usersLoading, error: usersError, meta: usersMeta, filters: userFilters, setFilters: setUserFilters, deactivateUser, createUser } = useUsers();
   const { roles, permissions, auditLogs, loading: rolesLoading, auditLoading, error: rolesError, assignPermissions, auditFilters, setAuditFilters, auditMeta } = useRoles();
 
   const urlTab = searchParams.get('tab') || 'users';
@@ -50,27 +52,30 @@ function AdminPageContent() {
     router.push(`/admin?tab=${tabId}`, { scroll: false });
   };
 
-  const handleEditUser = async (u) => {
+  const handleRoleChange = async (userId, newRole) => {
+    const originalUsers = [...users];
+    setUsers(prev => prev.map(u => u.id === userId ? {...u, role: newRole} : u));
     try {
-      await users.updateUser(u.id, { role: u.role });
-      setToastMessage('User role updated successfully');
+      await UserService.updateUser(userId, { role: newRole });
+      setToastMessage(`Role updated to ${newRole} successfully`);
     } catch (err) {
+      setUsers(originalUsers);
       alert(getErrorMessage(err));
     }
   };
 
-  const handleDeactivate = async (userId) => {
+  const handleToggleActive = async (userId, isActive) => {
     try {
-      await deactivateUser(userId);
-      setToastMessage('User deactivated successfully');
+      await users.updateUser(userId, { is_active: isActive });
+      setToastMessage(isActive ? 'User activated successfully' : 'User deactivated successfully');
     } catch (err) {
       alert(getErrorMessage(err));
     }
-  };
+  };;
 
   const handleCreateUser = async (payload) => {
-    await users.createUser(payload);
-    setToastMessage('User invited successfully');
+    await createUser(payload);
+    setToastMessage('User created successfully');
   };
 
   const tabs = [
@@ -91,15 +96,7 @@ function AdminPageContent() {
             </h1>
             
             <div className="flex items-center justify-end w-full md:w-auto h-10">
-              {activeTab === 'users' && hasPermission('users:write') && (
-                <button 
-                  onClick={() => setInviteModalOpen(true)}
-                  className="btn-primary flex items-center justify-center gap-2 h-10 px-5 border border-[var(--color-primary)] rounded-lg font-medium shadow-[0_0_15px_rgba(var(--color-primary-rgb),0.3)] hover:shadow-[0_0_25px_rgba(var(--color-primary-rgb),0.5)] transition-all bg-[var(--color-primary)] text-white whitespace-nowrap"
-                >
-                  <UserPlus size={18} />
-                  Invite User
-                </button>
-              )}
+              }
             </div>
           </div>
 
@@ -157,11 +154,12 @@ function AdminPageContent() {
                   <UserTable 
                     users={users} 
                     loading={usersLoading} 
-                    onEdit={handleEditUser} 
-                    onDeactivate={handleDeactivate}
+                      onRoleChange={handleRoleChange} 
+                    onToggleActive={handleToggleActive}
                     filters={userFilters}
                     onFilterChange={setUserFilters}
                     meta={usersMeta}
+                    onCreateUser={() => setInviteModalOpen(true)}
                   />
                 )}
                 {activeTab === 'roles' && (
@@ -208,5 +206,8 @@ export default function AdminPage() {
     </Suspense>
   );
 }
+
+
+
 
 

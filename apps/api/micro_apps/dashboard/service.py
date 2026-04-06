@@ -56,12 +56,28 @@ def compute_summary(db: Session, date_from: Optional[date] = None,
     # 3. Fetch ONLY the top 10 recent transactions
     recent = dashboard_repo.query_recent_transactions(db, date_from, date_to, limit=10)
 
+    # 4. Calculate weekly trend
+    today = date.today()
+    week_start = today - timedelta(days=today.weekday())
+    last_week_start = week_start - timedelta(days=7)
+    
+    this_week_results = dashboard_repo.query_totals(db, week_start, today)
+    this_week_total = sum((float(t_sum or 0) for _, t_sum, _ in this_week_results))
+    
+    last_week_results = dashboard_repo.query_totals(db, last_week_start, week_start - timedelta(days=1))
+    last_week_total = sum((float(t_sum or 0) for _, t_sum, _ in last_week_results))
+    
+    weekly_change_pct = round(((this_week_total - last_week_total) / last_week_total * 100) if last_week_total > 0 else 0.0, 1)
+
     return {
         "total_income":        round(total_income,  2),
         "total_expense":       round(total_expense, 2),
         "net_balance":         round(total_income - total_expense, 2),
         "total_transactions":  total_transactions,
         "monthly_trends":      monthly_trends,
+        "this_week_total":     round(this_week_total, 2),
+        "last_week_total":     round(last_week_total, 2),
+        "weekly_change_pct":   weekly_change_pct,
         "recent_transactions": [
             {"id": str(r.id), "amount": float(r.amount), "type": r.type.value,
              "category": r.category, "date": str(r.date), "notes": r.notes}

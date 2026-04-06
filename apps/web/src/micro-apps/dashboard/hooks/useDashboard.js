@@ -45,15 +45,5 @@ export function useDashboard({ dateFrom, dateTo, hasInsightsPermission }) {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
-  useEffect(() => {
-    const cleanup = DashboardService.connectLiveStream((data) => {
-      setSummary(data);
-    });
-
-    return () => {
-      cleanup();
-    };
-  }, []);
-
   return { summary, insights, loading, error, refetch: fetchDashboardData };
 }

@@ -12,7 +12,7 @@ export function useRoles() {
 
   const [auditFilters, setAuditFilters] = useState({
     page: 1,
-    page_size: 10,
+    page_size: 50,
     action: ''
   });
   const [auditMeta, setAuditMeta] = useState(null);

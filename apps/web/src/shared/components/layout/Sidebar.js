@@ -1,4 +1,5 @@
 'use client';
+import { createPortal } from 'react-dom';
 import { useState, useEffect } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -25,18 +26,20 @@ export default function Sidebar({ user, onLogout, hasPermission }) {
   }, [showLogoutModal]);
 
   // Condition links
+  const checkPerm = (perm) => hasPermission ? hasPermission(perm) : (user?.role === 'admin');
+
   const NAV_ITEMS = [
-    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, exact: false },
-    { name: 'Transactions', path: '/transactions', icon: Wallet, exact: false },
-  ];
+    checkPerm('dashboard:read') && { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, exact: false },
+    checkPerm('transactions:read') && { name: 'Transactions', path: '/transactions', icon: Wallet, exact: false },
+  ].filter(Boolean);
 
-  const isAdmin = hasPermission ? hasPermission('users:manage') : (user?.role === 'admin');
+  const ADMIN_ITEMS = [
+    checkPerm('users:read') && { name: 'User Management', path: '/admin?tab=users', act: 'users', icon: Users },
+    checkPerm('roles:manage') && { name: 'Roles & Permissions', path: '/admin?tab=roles', act: 'roles', icon: Shield },
+    checkPerm('audit:read') && { name: 'Audit Logs', path: '/admin?tab=audit', act: 'audit', icon: FileText },
+  ].filter(Boolean);
 
-  const ADMIN_ITEMS = isAdmin ? [
-    { name: 'User Management', path: '/admin?tab=users', act: 'users', icon: Users },
-    { name: 'Roles & Permissions', path: '/admin?tab=roles', act: 'roles', icon: Shield },
-    { name: 'Audit Logs', path: '/admin?tab=audit', act: 'audit', icon: FileText },
-  ] : [];
+  const isAdmin = ADMIN_ITEMS.length > 0;
 
   const renderNavItem = (item) => {
     // If it's an admin tab link, we need to check the query param
@@ -157,24 +160,37 @@ export default function Sidebar({ user, onLogout, hasPermission }) {
       </div>
 
       <AnimatePresence>
-        {showLogoutModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-auto">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-              onClick={() => setShowLogoutModal(false)}
-            />
+        {showLogoutModal && typeof document !== 'undefined' && createPortal(
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 9999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: 'rgba(0, 0, 0, 0.6)',
+              backdropFilter: 'blur(4px)',
+            }}
+            onClick={(e) => { if (e.target === e.currentTarget) setShowLogoutModal(false); }}
+          >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="relative bg-[rgba(15,20,35,0.95)] backdrop-blur-2xl border border-[var(--color-border)] p-6 rounded-2xl shadow-2xl w-full max-w-sm flex flex-col items-center text-center"
+              style={{
+                background: '#111827',
+                border: '1px solid rgba(0,212,170,0.2)',
+                borderRadius: '16px',
+                padding: '2rem',
+                width: '360px',
+                maxWidth: '90vw',
+                textAlign: 'center',
+                boxShadow: '0 8px 32px rgba(0,212,170,0.15)',
+              }}
             >
-              <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4">
+              <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4 mx-auto">
                 <LogOut className="w-6 h-6 text-[#ef4444]" />
               </div>
               <h2 className="font-syne text-xl font-bold text-white mb-2">Sign Out</h2>
@@ -198,7 +214,8 @@ export default function Sidebar({ user, onLogout, hasPermission }) {
                 </button>
               </div>
             </motion.div>
-          </div>
+          </div>,
+          document.body
         )}
       </AnimatePresence>
     </aside>

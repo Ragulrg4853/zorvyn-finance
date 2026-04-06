@@ -15,6 +15,7 @@ import AppShell from '../../shared/components/layout/AppShell';
 import ErrorState from '../../shared/components/feedback/ErrorState';
 import { useDashboard } from '../../micro-apps/dashboard/hooks/useDashboard';
 import SummaryCard from '../../micro-apps/dashboard/components/SummaryCard';
+import SecondaryMetricsRow from '../../micro-apps/dashboard/components/SecondaryMetricsRow';
 import TrendChart from '../../micro-apps/dashboard/components/TrendChart';
 import CategoryBreakdown from '../../micro-apps/dashboard/components/CategoryBreakdown';
 import RecentActivity from '../../micro-apps/dashboard/components/RecentActivity';
@@ -70,22 +71,24 @@ export default function DashboardPage() {
             <SummaryCard title="Total Income" value={summary?.total_income} type="income" trend={5.2} delay={0} loading={loading} />
             <SummaryCard title="Total Expense" value={summary?.total_expense} type="expense" trend={-2.1} delay={0.1} loading={loading} />
             <SummaryCard title="Net Balance" value={summary?.net_balance} type="net" trend={3.4} delay={0.2} loading={loading} />
-            <SummaryCard title="Transactions" value={summary?.transaction_count} type="activity" delay={0.3} loading={loading} />
+            <SummaryCard title="Transactions" value={summary?.total_transactions} type="activity" delay={0.3} loading={loading} />
           </div>
+
+          <SecondaryMetricsRow summary={summary} insights={insights} loading={loading} />
 
           {/* Main Body Grid */}
           <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-2 w-full max-w-full overflow-y-auto overflow-x-hidden p-1 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
-             <div className="min-h-[300px] w-full max-w-full">
+             <div className="h-[320px] min-h-[320px] w-full max-w-full overflow-hidden">
                <TrendChart data={summary?.monthly_trends} loading={loading} />
              </div>
-             <div className="min-h-[300px] w-full max-w-full">
+             <div className="h-[320px] min-h-[320px] w-full max-w-full overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
                 <CategoryBreakdown 
                   summary={summary} 
                   loading={loading} 
                   locked={!hasPermission('dashboard:insights')} 
                 />
              </div>
-             <div className="min-h-[300px] h-[400px] lg:h-full flex flex-col w-full max-w-full">
+             <div className="h-[320px] min-h-[320px] flex flex-col w-full max-w-full overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
                <RecentActivity transactions={summary?.recent_transactions} loading={loading} />
              </div>
           </div>

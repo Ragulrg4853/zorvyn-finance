@@ -11,23 +11,46 @@ import { getErrorMessage } from '@/shared/lib/errorHandler';
 import { ROLE_PERMISSIONS, ROUTES } from '@/shared/lib/constants';
 
 export function useAuth() {
-  const [user, setUser]       = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser]       = useState(() => AuthService.getCachedUser() || null);
+  const [loading, setLoading] = useState(!AuthService.getCachedUser());
   const [error, setError]     = useState(null);
   const router = useRouter();
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && !window.__zorvyn_token) {
-      setLoading(false);
-      setUser(null);
-      return;
+    // Initial setup if not already in cache
+    if (!AuthService.getCachedUser() && loading) {
+      AuthService.getCurrentUser()
+        .catch(() => {
+          AuthService.clearAuthToken();
+        })
+        .finally(() => setLoading(false));
     }
+  }, [loading]);
 
-    AuthService.getCurrentUser()
-      .then(setUser)
-      .catch(() => setUser(null))
-      .finally(() => setLoading(false));
+  useEffect(() => {
+    const handleAuthChange = (e) => {
+      const newUser = e.detail || null;
+      setUser(newUser);
+      setLoading(false);
+    };
+    
+    window.addEventListener('auth_changed', handleAuthChange);
+    return () => window.removeEventListener('auth_changed', handleAuthChange);
   }, []);
+
+  const refetchUser = useCallback(async () => {
+    if (typeof window !== 'undefined' && !window.__zorvyn_token) return;
+    try {
+      await AuthService.getCurrentUser(true);
+    } catch (err) {
+      // silent
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('focus', refetchUser);
+    return () => window.removeEventListener('focus', refetchUser);
+  }, [refetchUser]);
 
   const login = useCallback(async (username, password) => {
     setLoading(true);
@@ -53,8 +76,12 @@ export function useAuth() {
 
   const hasPermission = useCallback((permission) => {
     if (!user) return false;
+    if (user.role === 'admin') return true;
+    if (user.permissions && Array.isArray(user.permissions)) {
+      return user.permissions.includes(permission);
+    }
     return (ROLE_PERMISSIONS[user.role] || []).includes(permission);
   }, [user]);
 
-  return { user, loading, error, login, logout, hasPermission, isAuthenticated: !!user };
+  return { user, loading, error, login, logout, hasPermission, refetchUser, isAuthenticated: !!user };
 }

@@ -34,8 +34,9 @@ export function useUsers() {
   }, [loadUsers]);
 
   const createUser = async (payload) => {
-    await UserService.createUser(payload);
-    loadUsers();
+    const newUser = await UserService.createUser(payload);
+    setUsers(prev => [newUser, ...prev]);
+    return newUser;
   };
 
   const updateUser = async (id, payload) => {

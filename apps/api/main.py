@@ -97,31 +97,18 @@ async def app_error_handler(request: Request, exc: AppError):
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     loc_field = str(exc.errors()[0]["loc"][-1]) if exc.errors() else "unknown"
     msg = str(exc.errors()[0]["msg"]) if exc.errors() else "Invalid request data"
-    return JSONResponse(
-        status_code=422,
-        content={
-            "data": None,
-            "meta": {"correlation_id": getattr(request.state, "correlation_id", "")},
-            "error": {
-                "code": "VALIDATION_001",
-                "message": msg,
-                "field": loc_field
-            }
-        }
-    )
-@app.exception_handler(RequestValidationError)
-async def validation_error_handler(request: Request, exc: RequestValidationError):
+    correlation_id = getattr(request.state, "correlation_id", "unknown")
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={
             "data": None,
-            "meta": {"correlation_id": getattr(request.state, "correlation_id", "unknown")},
+            "meta": {"correlation_id": correlation_id},
             "error": {
                 "code": ErrorCode.VALIDATION_001.value,
-                "message": "Input validation failed",
-                "details": exc.errors()
+                "message": msg,
+                "field": loc_field
             }
-        },
+        }
     )
 
 @app.exception_handler(Exception)

@@ -16,6 +16,11 @@ export async function assignPermissions(roleId, payload) {
   return response.data.data;
 }
 
+export async function invalidateCache() {
+  const response = await apiClient.post('/v1/roles/invalidate-cache');
+  return response.data;
+}
+
 export async function fetchAuditLogs(filters = {}) {
   const params = Object.fromEntries(
     Object.entries(filters).filter(([, v]) => v !== null && v !== undefined && v !== ''),

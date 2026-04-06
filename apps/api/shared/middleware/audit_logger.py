@@ -28,6 +28,7 @@ def log_audit_event(
     Appends an immutable audit record.
     Assumption: called after successful commit in service layer.
     """
+    logger.debug(f"action=audit.write resource={resource_type} user={user_id}")
     try:
         entry = AuditLog(
             user_id=user_id,

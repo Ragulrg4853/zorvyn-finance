@@ -41,10 +41,11 @@ def get_role(
 def update_role_permissions(
     role_id: UUID,
     payload: PermissionAssign,
+    current_user = Depends(require_permission("roles:manage")),
     db: Session = Depends(get_db),
     correlation_id: str = Depends(get_correlation_id),
 ):
-    role = roles_service.update_role_permissions(db, role_id, payload)
+    role = roles_service.update_role_permissions(db, role_id, payload, current_user, correlation_id)
     return {
         "data": role.model_dump(),
         "meta": {"correlation_id": correlation_id},
@@ -62,3 +63,13 @@ def list_permissions(
         "meta": {"correlation_id": correlation_id},
         "error": None
     }
+
+@router.post("/roles/invalidate-cache", summary="Clear RBAC cache for all users of a role")
+def invalidate_role_cache(role_name: str = "all", current_user = Depends(require_permission("roles:manage"))):
+    from shared.middleware.rbac import _PERMISSIONS_CACHE
+    # Clear all cache entries for users with this role
+    keys_to_clear = [k for k, v in _PERMISSIONS_CACHE.items()]
+    for k in keys_to_clear:
+        _PERMISSIONS_CACHE.pop(k, None)
+    return {"data": {"cleared": len(keys_to_clear)}, "meta": {}, "error": None}
+

@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { formatCurrency } from '@/shared/utils/formatters';
 import { motion } from 'framer-motion';
 import { MouseGlowCard } from '@/shared/components/ui/MouseGlowCard';
+import { BarChart2 } from 'lucide-react';
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
@@ -28,18 +29,27 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 const TrendChart = ({ data, loading }) => {
+  const formatMonth = (m) => {
+    if (!m) return '';
+    const [year, month] = m.split('-');
+    const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${names[parseInt(month)-1]} '${year.slice(2)}`;
+  };
+
   if (loading) {
     return <div className="card w-full h-full min-h-[300px] skeleton rounded-2xl animate-pulse bg-[var(--color-surface)]/50 border border-white/5"></div>;
   }
 
-  if (!data || data.length === 0) {
+  const isAllZero = data && data.length > 0 && data.every(d => d.income === 0 && d.expense === 0);
+
+  if (!data || data.length === 0 || isAllZero) {
     return (
       <div className="card w-full h-full min-h-[300px] rounded-2xl flex items-center justify-center text-gray-500 border border-white/5 bg-gradient-to-br from-surface/80 to-surface/40 backdrop-blur-xl">
         <div className="text-center">
            <div className="w-12 h-12 rounded-full bg-border inline-flex items-center justify-center mb-3 text-gray-400 shadow-inner">
-             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3v18h18" /><path d="M18 9l-5 5-4-4-4 4" /></svg>
+             <BarChart2 className="w-6 h-6" />
            </div>
-           <p className="font-medium tracking-wide">No data available for this period</p>
+           <p className="font-medium tracking-wide">No transaction data for this period</p>
         </div>
       </div>
     );
@@ -60,30 +70,24 @@ const TrendChart = ({ data, loading }) => {
         </div>
       </div>
       <div className="flex-1 min-h-0 w-full z-10 relative">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height={280}>
           <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
             <defs>
-              <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--color-income)" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="var(--color-income)" stopOpacity={0}/>
+              <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3}/>
+                <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
               </linearGradient>
-              <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--color-expense)" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="var(--color-expense)" stopOpacity={0}/>
+              <linearGradient id="expenseGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
+                <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-            <XAxis dataKey="month" stroke="#718096" tick={{ fill: '#718096', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(dateStr) => {
-              try {
-                return format(new Date(dateStr + '-01'), "MMM");
-              } catch {
-                return dateStr;
-              }
-            }} />
-            <YAxis stroke="#718096" tick={{ fill: '#718096', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(val) => `$${val/1000}k`} />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+            <XAxis dataKey="month" stroke="#4a5568" tick={{ fill: '#8b9dc3', fontSize: 11 }} tickFormatter={formatMonth} />
+            <YAxis stroke="#4a5568" tick={{ fill: '#8b9dc3', fontSize: 11 }} tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} />
             <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }} />
-            <Area type="monotone" dataKey="income" name="Income" stroke="var(--color-income)" strokeWidth={3} fillOpacity={1} fill="url(#colorIncome)" />
-            <Area type="monotone" dataKey="expense" name="Expense" stroke="var(--color-expense)" strokeWidth={3} fillOpacity={1} fill="url(#colorExpense)" />
+            <Area type="monotone" dataKey="income" name="Income" stroke="#22c55e" strokeWidth={2} fillOpacity={1} fill="url(#incomeGrad)" />
+            <Area type="monotone" dataKey="expense" name="Expense" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#expenseGrad)" />
           </AreaChart>
         </ResponsiveContainer>
       </div>

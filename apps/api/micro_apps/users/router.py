@@ -54,10 +54,11 @@ def list_users(
 @router.post("", status_code=status.HTTP_201_CREATED)
 def create_user(
     payload: UserCreate,
+    current_user: User = Depends(require_permission("users:manage")),
     db: Session = Depends(get_db),
     correlation_id: str = Depends(get_correlation_id),
 ):
-    user = users_service.create_user(db, payload)
+    user = users_service.create_user(db, payload, current_user, correlation_id)
     return {
         "data": user.model_dump(),
         "meta": {"correlation_id": correlation_id},
@@ -85,7 +86,7 @@ def update_user(
     db: Session = Depends(get_db),
     correlation_id: str = Depends(get_correlation_id),
 ):
-    user = users_service.update_user(db, user_id, payload, current_user)
+    user = users_service.update_user(db, user_id, payload, current_user, correlation_id)
     return {
         "data": user.model_dump(),
         "meta": {"correlation_id": correlation_id},
@@ -96,7 +97,8 @@ def update_user(
 def deactivate_user(
     user_id: UUID,
     current_user: User = Depends(require_permission("users:manage")),
+    correlation_id: str = Depends(get_correlation_id),
     db: Session = Depends(get_db),
 ):
-    users_service.deactivate_user(db, user_id, current_user)
+    users_service.deactivate_user(db, user_id, current_user, correlation_id)
     return None

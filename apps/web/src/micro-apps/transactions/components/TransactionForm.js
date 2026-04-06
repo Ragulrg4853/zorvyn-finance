@@ -65,12 +65,15 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }) {
     try {
       setSubmitting(true);
       
-      const toAPIDate = (ddmmyyyy) => {
-        if (!ddmmyyyy || !ddmmyyyy.includes('-')) return null;
-        const parts = ddmmyyyy.split('-');
-        if (parts.length !== 3) return null;
-        if (parts[0].length === 4) return ddmmyyyy;
-        return `${parts[2]}-${parts[1]}-${parts[0]}`;
+      const toAPIDate = (displayDate) => {
+        if (!displayDate) return null;
+        // Handle both DD-MM-YYYY and YYYY-MM-DD
+        if (displayDate.includes('-')) {
+          const parts = displayDate.split('-');
+          if (parts[0].length === 4) return displayDate; // Already YYYY-MM-DD
+          if (parts[2].length === 4) return `${parts[2]}-${parts[1]}-${parts[0]}`; // DD-MM-YYYY
+        }
+        return displayDate;
       };
 
       const payload = {
@@ -78,12 +81,19 @@ export default function TransactionForm({ transaction, onSuccess, onCancel }) {
         type: formData.type.toLowerCase(),
         category: formData.category.trim(),
         date: toAPIDate(formData.date),
-        notes: formData.notes?.trim() || null
+        notes: formData.notes?.trim() || null,
       };
 
       let resultTx;
       if (transaction?.id) {
-        resultTx = await updateTransaction(transaction.id, payload);
+        const changedFields = {};
+        if (payload.amount !== transaction.amount) changedFields.amount = payload.amount;
+        if (payload.type !== transaction.type) changedFields.type = payload.type;
+        if (payload.category !== transaction.category) changedFields.category = payload.category;
+        if (payload.date !== transaction.date.split('T')[0]) changedFields.date = payload.date;
+        if (payload.notes !== (transaction.notes || null)) changedFields.notes = payload.notes;
+        
+        resultTx = await updateTransaction(transaction.id, changedFields);
       } else {
         resultTx = await createTransaction(payload);
         resultTx._isNew = true; // For animation targeting later

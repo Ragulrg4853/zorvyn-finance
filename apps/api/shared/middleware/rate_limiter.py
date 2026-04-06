@@ -44,7 +44,14 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
         while wins and wins[0] < now - WINDOW_SECONDS:
             wins.popleft()
 
-        remaining = RATE_LIMIT - len(wins)
+        if not wins:
+            # Clean up empty deque to avoid memory leak
+            del self._requests[key]
+
+        # Calculate remaining after cleanup (since it might be deleted)
+        current_len = len(wins) if wins else 0
+        remaining = RATE_LIMIT - current_len
+
         if remaining <= 0:
             return JSONResponse(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -60,7 +67,11 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
                 },
             )
 
-        wins.append(now)
+        if key not in self._requests:
+            # Recreate if it was deleted
+            self._requests[key] = deque()
+            
+        self._requests[key].append(now)
         response = await call_next(request)
         response.headers["X-RateLimit-Limit"]     = str(RATE_LIMIT)
         response.headers["X-RateLimit-Remaining"] = str(remaining - 1)

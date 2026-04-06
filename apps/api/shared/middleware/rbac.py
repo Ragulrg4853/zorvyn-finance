@@ -145,9 +145,13 @@ def require_permission(permission: str):
     ) -> User:
         role_name = current_user.role.value if hasattr(current_user.role, "value") else current_user.role
         
-        allowed = get_cached_permissions(str(current_user.id), role_name, db)
-
-        if permission not in allowed:
+        # Admin always has all permissions â€” bypass cache and DB lookup
+        if role_name == "admin":
+            return current_user
+        
+        # For viewer/analyst: check cache then DB
+        user_permissions = get_cached_permissions(str(current_user.id), role_name, db)
+        if permission not in user_permissions:
             raise AppError(code=ErrorCode.RBAC_001, http_status=status.HTTP_403_FORBIDDEN)
         return current_user
 

@@ -41,6 +41,7 @@ from micro_apps.users import repository as users_repo
 from micro_apps.auth import repository as auth_repo
 from micro_apps.users.schemas import UserRead, UserCreate, UserUpdate
 from shared.middleware.rbac import invalidate_permission_cache
+from shared.middleware.audit_logger import log_audit_event
 
 logger = get_logger(__name__)
 
@@ -50,7 +51,7 @@ def list_users(db: Session, role: Optional[UserRole] = None,
     items, total = users_repo.list_users(db, role=role, is_active=is_active, page=page, page_size=page_size)
     return [UserRead.model_validate(user) for user in items], total
 
-def create_user(db: Session, payload: UserCreate) -> UserRead:
+def create_user(db: Session, payload: UserCreate, current_user: User, correlation_id: str) -> UserRead:
     if auth_repo.find_by_username(db, payload.username):
         logger.warning(f"Registration failed: username '{payload.username}' already exists.", extra={"action": "user_creation_failed", "reason": "username_taken"})
         raise AppError(code=ErrorCode.AUTH_001, http_status=status.HTTP_400_BAD_REQUEST)
@@ -67,6 +68,17 @@ def create_user(db: Session, payload: UserCreate) -> UserRead:
         role=payload.role
     )
     logger.info(f"User created successfully: {payload.username}", extra={"action": "user_created", "user_id": str(user.id), "role": payload.role.value})
+    
+    log_audit_event(
+        db=db,
+        user_id=current_user.id,
+        action="user.create",
+        resource_type="users",
+        resource_id=str(user.id),
+        new_value={"username": user.username, "role": user.role.value},
+        correlation_id=correlation_id,
+    )
+    
     return UserRead.model_validate(user)
 
 def get_user(db: Session, user_id: UUID) -> UserRead:
@@ -75,11 +87,16 @@ def get_user(db: Session, user_id: UUID) -> UserRead:
         raise AppError(code=ErrorCode.USER_001, http_status=status.HTTP_404_NOT_FOUND)
     return UserRead.model_validate(user)
 
-def update_user(db: Session, user_id: UUID, payload: UserUpdate, requesting_user: User) -> UserRead:
+def update_user(db: Session, user_id: UUID, payload: UserUpdate, requesting_user: User, correlation_id: str) -> UserRead:
     user = users_repo.get_by_id(db, user_id)
     if not user:
         logger.warning(f"Failed to update user: ID {user_id} not found.", extra={"action": "user_update_failed", "reason": "not_found"})
         raise AppError(code=ErrorCode.USER_001, http_status=status.HTTP_404_NOT_FOUND)
+        
+    old_value = {
+        "role": user.role.value if user.role else None,
+        "is_active": user.is_active
+    }
     
     updates = payload.model_dump(exclude_unset=True)
     if "role" in updates:
@@ -87,13 +104,34 @@ def update_user(db: Session, user_id: UUID, payload: UserUpdate, requesting_user
             logger.warning(f"Admin {user_id} attempted to demote themselves.", extra={"action": "user_update_failed", "reason": "self_demotion"})
             raise AppError(code=ErrorCode.RBAC_002, http_status=status.HTTP_400_BAD_REQUEST)
 
+    if "is_active" in updates:
+        if user.id == requesting_user.id and requesting_user.role == UserRole.admin:
+            logger.warning(f"Admin {user_id} attempted to change their active status.", extra={"action": "user_update_failed", "reason": "self_status_change"})
+            raise AppError(code=ErrorCode.USER_001, http_status=status.HTTP_400_BAD_REQUEST, field="is_active")
+
     updated_user = users_repo.update_user(db, user, updates)
     if "role" in updates:
         invalidate_permission_cache(str(updated_user.id))
     logger.info(f"User {user_id} updated.", extra={"action": "user_updated", "user_id": str(updated_user.id), "updated_fields": list(updates.keys())})
+    
+    new_value = {
+        "role": updated_user.role.value if updated_user.role else None,
+        "is_active": updated_user.is_active
+    }
+    log_audit_event(
+        db=db,
+        user_id=requesting_user.id,
+        action="user.update",
+        resource_type="users",
+        resource_id=str(updated_user.id),
+        old_value=old_value,
+        new_value=new_value,
+        correlation_id=correlation_id,
+    )
+    
     return UserRead.model_validate(updated_user)
 
-def deactivate_user(db: Session, user_id: UUID, requesting_user: User) -> None:
+def deactivate_user(db: Session, user_id: UUID, requesting_user: User, correlation_id: str) -> None:
     if str(user_id) == str(requesting_user.id):
         logger.warning(f"User {user_id} attempted to deactivate themselves.", extra={"action": "user_deactivation_failed", "reason": "self_deactivation"})
         raise AppError(code=ErrorCode.USER_001, http_status=status.HTTP_400_BAD_REQUEST, field="user_id") # generic 400 for self-deactivation per rules
@@ -102,6 +140,19 @@ def deactivate_user(db: Session, user_id: UUID, requesting_user: User) -> None:
     if not user:
         logger.warning(f"Failed to deactivate user: ID {user_id} not found.", extra={"action": "user_deactivation_failed", "reason": "not_found"})
         raise AppError(code=ErrorCode.USER_001, http_status=status.HTTP_404_NOT_FOUND)
+        
+    old_value = {"is_active": user.is_active}
     
     users_repo.deactivate_user(db, user)
     logger.info(f"User {user_id} deactivated.", extra={"action": "user_deactivated", "user_id": str(user_id)})
+    
+    log_audit_event(
+        db=db,
+        user_id=requesting_user.id,
+        action="user.deactivate",
+        resource_type="users",
+        resource_id=str(user_id),
+        old_value=old_value,
+        new_value={"is_active": False},
+        correlation_id=correlation_id,
+    )

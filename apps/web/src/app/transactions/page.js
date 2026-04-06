@@ -58,11 +58,13 @@ export default function TransactionsPage() {
     if (!confirm('Are you sure you want to delete this transaction?')) return;
     
     try {
+      // Optimsitic UI Update
+      setTransactions(prev => prev.filter(t => t.id !== id));
       await deleteTransaction(id);
-      setToastMessage('Transaction deleted');
-      refetch();
+      setToastMessage('Transaction deleted successfully');
     } catch (err) {
       alert(getErrorMessage(err));
+      refetch(); // Rollback on failure
     }
   };
 
@@ -77,6 +79,10 @@ export default function TransactionsPage() {
 
   const handlePageChange = (newPage) => {
     setFilters(prev => ({ ...prev, page: newPage }));
+  };
+
+  const handlePageSizeChange = (newSize) => {
+    setFilters(prev => ({ ...prev, page_size: newSize, page: 1 }));
   };
 
   const handleClearFilters = () => {
@@ -140,6 +146,7 @@ export default function TransactionsPage() {
               onDelete={handleDelete}
               onSort={handleSort}
               onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
               onClearFilters={handleClearFilters}
             />
           </div>

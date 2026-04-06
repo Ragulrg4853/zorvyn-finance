@@ -16,7 +16,7 @@ export function AuditLogViewer({ logs, loading, meta, filters, onFilterChange, u
   };
 
   const handleClearFilters = () => {
-    onFilterChange({ page_size: 10 });
+    onFilterChange({ page_size: 50 });
   };
 
   const getUsername = (userId) => {
