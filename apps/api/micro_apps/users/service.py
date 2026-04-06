@@ -156,3 +156,57 @@ def deactivate_user(db: Session, user_id: UUID, requesting_user: User, correlati
         new_value={"is_active": False},
         correlation_id=correlation_id,
     )
+
+def deactivate_user_patch(db: Session, user_id: UUID, requesting_user: User, correlation_id: str) -> UserRead:
+    if str(user_id) == str(requesting_user.id):
+        logger.warning(f"User {user_id} attempted to deactivate themselves.", extra={"action": "user_deactivation_failed", "reason": "self_deactivation"})
+        raise AppError(code=ErrorCode.USER_001, http_status=status.HTTP_400_BAD_REQUEST, field="user_id")
+    
+    user = users_repo.get_by_id(db, user_id)
+    if not user:
+        raise AppError(code=ErrorCode.USER_001, http_status=status.HTTP_404_NOT_FOUND)
+        
+    if not user.is_active:
+        return UserRead.model_validate(user)
+        
+    old_value = {"is_active": user.is_active}
+    users_repo.deactivate_user(db, user)
+    logger.info(f"User {user_id} deactivated via patch.", extra={"action": "user_deactivated", "user_id": str(user_id)})
+    
+    log_audit_event(
+        db=db,
+        user_id=requesting_user.id,
+        action="user.deactivate",
+        resource_type="users",
+        resource_id=str(user_id),
+        old_value=old_value,
+        new_value={"is_active": False},
+        correlation_id=correlation_id,
+    )
+    return UserRead.model_validate(user)
+
+def activate_user(db: Session, user_id: UUID, requesting_user: User, correlation_id: str) -> UserRead:
+    user = users_repo.get_by_id(db, user_id)
+    if not user:
+        raise AppError(code=ErrorCode.USER_001, http_status=status.HTTP_404_NOT_FOUND)
+        
+    if user.is_active:
+        return UserRead.model_validate(user)
+        
+    old_value = {"is_active": user.is_active}
+    
+    updates = {"is_active": True}
+    updated_user = users_repo.update_user(db, user, updates)
+    logger.info(f"User {user_id} activated.", extra={"action": "user_activated", "user_id": str(user_id)})
+    
+    log_audit_event(
+        db=db,
+        user_id=requesting_user.id,
+        action="user.activate",
+        resource_type="users",
+        resource_id=str(user_id),
+        old_value=old_value,
+        new_value={"is_active": True},
+        correlation_id=correlation_id,
+    )
+    return UserRead.model_validate(updated_user)

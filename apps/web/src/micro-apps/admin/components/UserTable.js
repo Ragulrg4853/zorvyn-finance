@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { useAuth } from '../../auth/hooks/useAuth';
 import ErrorState from '../../../shared/components/feedback/ErrorState';
 
-export function UserTable({ users, loading, onRoleChange, onToggleActive, filters, onFilterChange, meta, error, onCreateUser }) {
+export function UserTable({ users, loading, updateUser, activateUser, deactivateUser, filters, onFilterChange, meta, error, onCreateUser }) {
   const { user: currentUser, hasPermission } = useAuth();
 
   if (error) {
@@ -147,7 +147,7 @@ export function UserTable({ users, loading, onRoleChange, onToggleActive, filter
                           className="h-8 px-2 rounded-md bg-white/5 border border-white/10 text-gray-300 text-xs font-semibold uppercase tracking-wide focus:outline-none focus:border-[var(--color-primary)] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                           value={usr.role}
                           disabled={isSelf}
-                          onChange={(e) => onRoleChange(usr.id, e.target.value)}
+                          onChange={(e) => updateUser(usr.id, { role: e.target.value })}
                         >
                           <option value="viewer" className="bg-[#0c1222]">Viewer</option>
                           <option value="analyst" className="bg-[#0c1222]">Analyst</option>
@@ -157,7 +157,7 @@ export function UserTable({ users, loading, onRoleChange, onToggleActive, filter
                           <button 
                             onClick={() => {
                               if (window.confirm(`Deactivate ${usr.username}? They will lose access immediately.`)) {
-                                onToggleActive(usr.id, false);
+                                deactivateUser(usr.id);
                               }
                             }} 
                             disabled={isSelf}
@@ -167,7 +167,7 @@ export function UserTable({ users, loading, onRoleChange, onToggleActive, filter
                           </button>
                         ) : (
                           <button 
-                            onClick={() => onToggleActive(usr.id, true)} 
+                            onClick={() => activateUser(usr.id)} 
                             disabled={isSelf}
                             className="h-8 px-3 rounded-md flex items-center justify-center gap-2 bg-white/5 border border-green-500/50 hover:bg-green-500/80 hover:text-white text-green-400 disabled:opacity-30 disabled:hover:bg-white/5 transition-all text-xs font-semibold tracking-wide uppercase" 
                           >

@@ -18,7 +18,12 @@ export async function updateUser(id, payload) {
   return response.data.data;
 }
 
+export async function activateUser(id) {
+  const response = await apiClient.patch(`/v1/users/${id}/activate`);
+  return response.data.data;
+}
+
 export async function deactivateUser(id) {
-  const response = await apiClient.delete(`/v1/users/${id}`);
-  return response?.data;
+  const response = await apiClient.patch(`/v1/users/${id}/deactivate`);
+  return response.data.data;
 }

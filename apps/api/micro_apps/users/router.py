@@ -94,7 +94,7 @@ def update_user(
     }
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-def deactivate_user(
+def deactivate_user_delete(
     user_id: UUID,
     current_user: User = Depends(require_permission("users:manage")),
     correlation_id: str = Depends(get_correlation_id),
@@ -102,3 +102,31 @@ def deactivate_user(
 ):
     users_service.deactivate_user(db, user_id, current_user, correlation_id)
     return None
+
+@router.patch("/{user_id}/activate")
+def activate_user(
+    user_id: UUID,
+    current_user: User = Depends(require_permission("users:manage")),
+    db: Session = Depends(get_db),
+    correlation_id: str = Depends(get_correlation_id),
+):
+    user = users_service.activate_user(db, user_id, current_user, correlation_id)
+    return {
+        "data": user.model_dump(),
+        "meta": {"correlation_id": correlation_id},
+        "error": None
+    }
+
+@router.patch("/{user_id}/deactivate")
+def deactivate_user_patch(
+    user_id: UUID,
+    current_user: User = Depends(require_permission("users:manage")),
+    db: Session = Depends(get_db),
+    correlation_id: str = Depends(get_correlation_id),
+):
+    user = users_service.deactivate_user_patch(db, user_id, current_user, correlation_id)
+    return {
+        "data": user.model_dump(),
+        "meta": {"correlation_id": correlation_id},
+        "error": None
+    }

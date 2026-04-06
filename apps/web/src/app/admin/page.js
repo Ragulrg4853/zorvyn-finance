@@ -33,7 +33,7 @@ function AdminPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
-  const { users, setUsers, loading: usersLoading, error: usersError, meta: usersMeta, filters: userFilters, setFilters: setUserFilters, deactivateUser, createUser } = useUsers();
+  const { users, setUsers, loading: usersLoading, error: usersError, meta: usersMeta, filters: userFilters, setFilters: setUserFilters, deactivateUser, activateUser, createUser, updateUser } = useUsers();
   const { roles, permissions, auditLogs, loading: rolesLoading, auditLoading, error: rolesError, assignPermissions, auditFilters, setAuditFilters, auditMeta } = useRoles();
 
   const urlTab = searchParams.get('tab') || 'users';
@@ -56,7 +56,7 @@ function AdminPageContent() {
     const originalUsers = [...users];
     setUsers(prev => prev.map(u => u.id === userId ? {...u, role: newRole} : u));
     try {
-      await UserService.updateUser(userId, { role: newRole });
+      await updateUser(userId, { role: newRole });
       setToastMessage(`Role updated to ${newRole} successfully`);
     } catch (err) {
       setUsers(originalUsers);
@@ -66,7 +66,11 @@ function AdminPageContent() {
 
   const handleToggleActive = async (userId, isActive) => {
     try {
-      await users.updateUser(userId, { is_active: isActive });
+      if (isActive) {
+         await activateUser(userId);
+      } else {
+         await deactivateUser(userId);
+      }
       setToastMessage(isActive ? 'User activated successfully' : 'User deactivated successfully');
     } catch (err) {
       alert(getErrorMessage(err));
@@ -153,8 +157,9 @@ function AdminPageContent() {
                   <UserTable 
                     users={users} 
                     loading={usersLoading} 
-                      onRoleChange={handleRoleChange} 
-                    onToggleActive={handleToggleActive}
+                    updateUser={(id, payload) => handleRoleChange(id, payload.role)} 
+                    activateUser={(id) => handleToggleActive(id, true)}
+                    deactivateUser={(id) => handleToggleActive(id, false)}
                     filters={userFilters}
                     onFilterChange={setUserFilters}
                     meta={usersMeta}

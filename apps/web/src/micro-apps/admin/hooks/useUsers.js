@@ -35,18 +35,23 @@ export function useUsers() {
 
   const createUser = async (payload) => {
     const newUser = await UserService.createUser(payload);
-    setUsers(prev => [newUser, ...prev]);
+    setUsers((prev) => [newUser, ...prev]);
     return newUser;
   };
 
   const updateUser = async (id, payload) => {
-    await UserService.updateUser(id, payload);
-    loadUsers();
+    const updatedUser = await UserService.updateUser(id, payload);
+    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, ...updatedUser } : u)));
+  };
+
+  const activateUser = async (id) => {
+    const updatedUser = await UserService.activateUser(id);
+    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, is_active: true, ...updatedUser } : u)));
   };
 
   const deactivateUser = async (id) => {
-    await UserService.deactivateUser(id);
-    loadUsers();
+    const updatedUser = await UserService.deactivateUser(id);
+    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, is_active: false, ...updatedUser } : u)));
   };
 
   return { 
@@ -60,6 +65,7 @@ export function useUsers() {
     refetch: loadUsers, 
     createUser, 
     updateUser, 
+    activateUser,
     deactivateUser 
   };
 }
