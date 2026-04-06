@@ -105,7 +105,7 @@ export default function Topbar({ title, user }) {
   };
 
   return (
-    <header className="h-20 w-full flex items-center justify-between px-6 md:px-8 border-b border-[var(--color-border)] bg-[rgba(10,15,30,0.8)] backdrop-blur-xl shrink-0 z-40 shadow-md">
+    <header className="h-20 w-full flex items-center justify-between pl-[4.5rem] pr-6 md:px-8 border-b border-[var(--color-border)] bg-[rgba(10,15,30,0.8)] backdrop-blur-xl shrink-0 z-40 shadow-md">
       
       {/* Left section: Dynamic Page Title */}
       <div className="flex items-center gap-4 flex-1">

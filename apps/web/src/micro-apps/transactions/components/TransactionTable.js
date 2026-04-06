@@ -91,8 +91,8 @@ export default function TransactionTable({
   };
 
   return (
-    <div className="h-full flex flex-col w-full overflow-hidden animate-in fade-in duration-500">
-      <div className="overflow-auto flex-1 relative hide-scrollbars-on-mobile custom-scrollbar">
+    <div className="h-full flex flex-col w-full max-w-full animate-in fade-in duration-500 overflow-x-hidden">
+      <div className="overflow-x-auto overflow-y-auto flex-1 relative hide-scrollbars-on-mobile custom-scrollbar w-full max-w-full">
         <table className="w-full text-left whitespace-nowrap min-w-[800px] border-collapse">
           <thead className="sticky top-0 z-20 bg-[rgba(12,18,34,0.95)] backdrop-blur-xl border-b border-[var(--color-border)] text-[11px] text-gray-400 uppercase tracking-[0.1em] font-syne font-semibold shadow-sm after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[1px] after:bg-white/10">
             <tr>

@@ -66,7 +66,7 @@ export default function DashboardPage() {
           {error && <ErrorState message={error} onRetry={refetch} />}
 
           {/* Metrics Row */}
-          <div className="shrink-0 grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="shrink-0 grid gap-4 w-full max-w-full" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
             <SummaryCard title="Total Income" value={summary?.total_income} type="income" trend={5.2} delay={0} loading={loading} />
             <SummaryCard title="Total Expense" value={summary?.total_expense} type="expense" trend={-2.1} delay={0.1} loading={loading} />
             <SummaryCard title="Net Balance" value={summary?.net_balance} type="net" trend={3.4} delay={0.2} loading={loading} />
@@ -74,27 +74,20 @@ export default function DashboardPage() {
           </div>
 
           {/* Main Body Grid */}
-          <div className="flex-1 min-h-0 flex flex-col xl:flex-row gap-4 pb-2">
-            
-            {/* Left Content (Charts) */}
-              <div className="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto pr-1 xl:pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
-                 <div className="min-h-[300px]">
-                   <TrendChart data={summary?.monthly_trends} loading={loading} />
-                 </div>
-                 <div className="min-h-[300px]">
-                    <CategoryBreakdown 
-                      summary={summary} 
-                      loading={loading} 
-                      locked={!hasPermission('dashboard:insights')} 
-                    />
-                 </div>
-              </div>
-
-            {/* Right Content (Activity) */}
-            <div className="w-full xl:w-[380px] 2xl:w-[420px] shrink-0 h-[400px] xl:h-full flex flex-col min-h-0">
+          <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-2 w-full max-w-full overflow-y-auto overflow-x-hidden p-1 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+             <div className="min-h-[300px] w-full max-w-full">
+               <TrendChart data={summary?.monthly_trends} loading={loading} />
+             </div>
+             <div className="min-h-[300px] w-full max-w-full">
+                <CategoryBreakdown 
+                  summary={summary} 
+                  loading={loading} 
+                  locked={!hasPermission('dashboard:insights')} 
+                />
+             </div>
+             <div className="min-h-[300px] h-[400px] lg:h-full flex flex-col w-full max-w-full">
                <RecentActivity transactions={summary?.recent_transactions} loading={loading} />
-            </div>
-
+             </div>
           </div>
         </div>
       </AppShell>

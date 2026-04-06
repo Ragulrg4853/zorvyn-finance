@@ -11,7 +11,7 @@ export default function AppShell({ children, user, onLogout, hasPermission, page
       <Sidebar user={user} onLogout={onLogout} hasPermission={hasPermission} />
       
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col relative overflow-hidden bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-[#0a0f1e] to-[#0a0f1e]">
+      <div className="flex-1 flex flex-col relative min-w-0 overflow-x-hidden bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-[#0a0f1e] to-[#0a0f1e]">
         {/* Top Header */}
         <Topbar title={pageTitle} user={user} />
         

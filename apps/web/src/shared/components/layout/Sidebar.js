@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, Wallet, LogOut, CodeSquare, Users, Shield, FileText } from 'lucide-react';
+import { LayoutDashboard, Wallet, LogOut, CodeSquare, Users, Shield, FileText, Menu } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Sidebar({ user, onLogout, hasPermission }) {
@@ -10,6 +10,11 @@ export default function Sidebar({ user, onLogout, hasPermission }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  useEffect(() => {
+    setIsMobileOpen(false);
+  }, [pathname, searchParams]);
 
   useEffect(() => {
     const handleEscape = (e) => {
@@ -75,15 +80,35 @@ export default function Sidebar({ user, onLogout, hasPermission }) {
               isActive ? 'text-primary' : 'text-gray-500 group-hover:text-primary/70 group-hover:scale-110'
             }`} 
           />
-          <span className="z-10">{item.name}</span>
+          <span className="z-10 text-[0.875rem]">{item.name}</span>
         </div>
       </Link>
     );
   };
 
   return (
-    <aside className="w-64 max-w-[16rem] h-full flex flex-col bg-[#111827]/80 backdrop-blur-xl border-r border-primary/20 shrink-0 transition-all z-40 relative">
-      {/* Brand Header */}
+    <>
+      <button 
+        onClick={() => setIsMobileOpen(!isMobileOpen)}
+        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-[#111827] rounded-md text-white shadow-lg border border-white/10"
+      >
+        <Menu className="w-6 h-6" />
+      </button>
+
+      <AnimatePresence>
+        {isMobileOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsMobileOpen(false)}
+            className="md:hidden fixed inset-0 z-30 bg-black/50 backdrop-blur-sm"
+          />
+        )}
+      </AnimatePresence>
+
+      <aside className={`fixed md:relative inset-y-0 left-0 z-40 w-[220px] h-full flex flex-col bg-[#111827]/95 backdrop-blur-xl border-r border-primary/20 shrink-0 transition-transform duration-300 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+        {/* Brand Header */}
       <div className="h-20 flex items-center px-6 border-b border-white/5 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent pointer-events-none" />
         <CodeSquare className="text-primary w-7 h-7 mr-3 shrink-0" />
@@ -177,5 +202,6 @@ export default function Sidebar({ user, onLogout, hasPermission }) {
         )}
       </AnimatePresence>
     </aside>
+  </>
   );
 }
