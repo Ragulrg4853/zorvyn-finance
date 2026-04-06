@@ -17,7 +17,7 @@ def query_totals(db: Session, date_from: Optional[date] = None, date_to: Optiona
         q = q.filter(Transaction.date >= date_from)
     elif date_to:
         q = q.filter(Transaction.date <= date_to)
-    return q.group_by('year', 'month', Transaction.type).limit(10000).all()
+    return q.group_by(Transaction.type).limit(10000).all()
 
 
 def query_monthly_trends(db: Session, date_from: Optional[date] = None, date_to: Optional[date] = None) -> List[Tuple[Any, Any, Any, Any]]:

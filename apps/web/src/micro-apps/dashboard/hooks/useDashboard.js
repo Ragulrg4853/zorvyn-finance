@@ -45,5 +45,19 @@ export function useDashboard({ dateFrom, dateTo, hasInsightsPermission }) {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
+  useEffect(() => {
+    // Only connect logic if NO date filters are applied
+    if (dateFrom || dateTo) return;
+
+    const unsubscribe = DashboardService.connectLiveStream((update) => {
+      // Safely update to incoming snapshot without wiping loading states manually
+      setSummary(update?.data || update);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [dateFrom, dateTo]);
+
   return { summary, insights, loading, error, refetch: fetchDashboardData };
 }

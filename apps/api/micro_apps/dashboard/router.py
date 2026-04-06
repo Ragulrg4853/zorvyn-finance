@@ -18,7 +18,9 @@ from micro_apps.dashboard import service as dashboard_service
 
 from shared.utils.error_taxonomy import AppError, ErrorCode
 from shared.utils.validators import validate_date_range
+from shared.utils.logger import get_logger
 
+logger = get_logger(__name__)
 router = APIRouter()
 
 @router.get("/summary", summary="Full dashboard summary [dashboard:read]")
@@ -30,9 +32,14 @@ def get_summary(
     correlation_id: str = Depends(get_correlation_id),
 ):
     """Returns totals, net balance, recent transactions, and monthly trends."""
-    validate_date_range(date_from, date_to)
-    data = dashboard_service.compute_summary(db=db, date_from=date_from, date_to=date_to)
-    return {"data": data, "meta": {"correlation_id": correlation_id}, "error": None}
+    logger.info("Computing dashboard summary", extra={"action": "dashboard.summary.started", "date_from": str(date_from), "date_to": str(date_to), "correlation_id": correlation_id})
+    try:
+        validate_date_range(date_from, date_to)
+        data = dashboard_service.compute_summary(db=db, date_from=date_from, date_to=date_to)
+        return {"data": data, "meta": {"correlation_id": correlation_id}, "error": None}
+    except Exception as e:
+        logger.error(f"Failed to compute dashboard summary: {str(e)}", exc_info=True, extra={"action": "dashboard.summary.failed", "correlation_id": correlation_id})
+        raise
 
 
 @router.get("/insights", summary="Category insights [dashboard:insights]")
