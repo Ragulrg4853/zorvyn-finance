@@ -167,14 +167,3 @@ cd apps/web && npm test
 
 ---
 
-## Step 10 — Start Copilot Development
-
-You are ready. Open COPILOT_GUIDE.md and follow the sessions in order.
-
-First: copy the "First Prompt" at the top of COPILOT_GUIDE.md into Copilot Chat.
-Then: follow Session 1, 2, 3... in sequence.
-
-Keyboard shortcuts:
-- Open Copilot Chat: Ctrl+Shift+I (Windows) / Cmd+Shift+I (macOS)
-- Accept suggestion:  Tab
-- Dismiss suggestion: Escape
