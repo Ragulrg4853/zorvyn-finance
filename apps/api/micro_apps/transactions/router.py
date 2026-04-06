@@ -44,7 +44,7 @@ def export_transactions(
     )
 
 
-@router.get("/", summary="List transactions [transactions:read]")
+@router.get("", summary="List transactions [transactions:read]")
 def list_transactions(
     txn_type:  Optional[TransactionType] = Query(None, alias="type"),
     category:  Optional[str]  = None,
@@ -74,7 +74,7 @@ def list_transactions(
     }
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED,
+@router.post("", status_code=status.HTTP_201_CREATED,
              summary="Create transaction [transactions:write]")
 def create_transaction(
     payload: TransactionCreate,

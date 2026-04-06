@@ -28,7 +28,7 @@ from micro_apps.users.schemas import UserCreate, UserUpdate, UserRead
 
 router = APIRouter(dependencies=[Depends(require_permission("users:manage"))])
 
-@router.get("/")
+@router.get("")
 def list_users(
     role: Optional[UserRole] = Query(None),
     is_active: Optional[bool] = Query(None),
@@ -51,7 +51,7 @@ def list_users(
         "error": None
     }
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post("", status_code=status.HTTP_201_CREATED)
 def create_user(
     payload: UserCreate,
     db: Session = Depends(get_db),
