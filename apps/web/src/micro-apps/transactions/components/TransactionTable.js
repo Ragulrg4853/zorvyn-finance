@@ -1,8 +1,9 @@
+import React from 'react';
 import { format } from 'date-fns';
 import { Pencil, Trash2, ArrowUp, ArrowDown, Search } from 'lucide-react';
 import { formatCurrency } from '@/shared/utils/formatters';
 
-export default function TransactionTable({ 
+const TransactionTable = ({ 
   transactions, 
   loading, 
   error, 
@@ -213,3 +214,5 @@ export default function TransactionTable({
     </div>
   );
 }
+
+export default React.memo(TransactionTable);

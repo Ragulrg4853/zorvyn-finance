@@ -25,11 +25,13 @@ export function useDashboard({ dateFrom, dateTo, hasInsightsPermission }) {
       if (dateFrom) params.date_from = toAPIDate(dateFrom);
       if (dateTo)   params.date_to   = toAPIDate(dateTo);
 
-      const summaryData = await DashboardService.fetchSummary(params);
+      const [summaryData, insightsData] = await Promise.all([
+        DashboardService.fetchSummary(params),
+        hasInsightsPermission ? DashboardService.fetchInsights(params) : Promise.resolve(null)
+      ]);
+      
       setSummary(summaryData);
-
       if (hasInsightsPermission) {
-        const insightsData = await DashboardService.fetchInsights(params);
         setInsights(insightsData);
       }
     } catch (err) {

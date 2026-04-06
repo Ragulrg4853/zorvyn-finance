@@ -17,7 +17,7 @@ def query_totals(db: Session, date_from: Optional[date] = None, date_to: Optiona
         q = q.filter(Transaction.date >= date_from)
     elif date_to:
         q = q.filter(Transaction.date <= date_to)
-    return q.group_by(Transaction.type).all()
+    return q.group_by('year', 'month', Transaction.type).limit(10000).all()
 
 
 def query_monthly_trends(db: Session, date_from: Optional[date] = None, date_to: Optional[date] = None) -> List[Tuple[Any, Any, Any, Any]]:
@@ -39,7 +39,7 @@ def query_monthly_trends(db: Session, date_from: Optional[date] = None, date_to:
         func.extract('year', Transaction.date),
         func.extract('month', Transaction.date),
         Transaction.type
-    ).all()
+    ).limit(10000).all()
 
 
 def query_recent_transactions(db: Session, date_from: Optional[date] = None, date_to: Optional[date] = None, limit: int = 10) -> List[Transaction]:
@@ -67,4 +67,4 @@ def query_insights(db: Session, date_from: Optional[date] = None, date_to: Optio
     elif date_to:
         q = q.filter(Transaction.date <= date_to)
 
-    return q.group_by(Transaction.type, Transaction.category).all()
+    return q.group_by(Transaction.type, Transaction.category).limit(10000).all()

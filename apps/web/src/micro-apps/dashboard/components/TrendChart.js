@@ -1,3 +1,4 @@
+import React from 'react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { format } from 'date-fns';
 import { formatCurrency } from '@/shared/utils/formatters';
@@ -26,7 +27,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-export default function TrendChart({ data, loading }) {
+const TrendChart = ({ data, loading }) => {
   if (loading) {
     return <div className="card w-full h-full min-h-[300px] skeleton rounded-2xl animate-pulse bg-[var(--color-surface)]/50 border border-white/5"></div>;
   }
@@ -90,3 +91,5 @@ export default function TrendChart({ data, loading }) {
     </motion.div>
   );
 }
+
+export default React.memo(TrendChart);

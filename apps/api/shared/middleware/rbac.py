@@ -60,7 +60,7 @@ DEFAULT_PERMISSIONS: dict[str, set[str]] = {
 }
 
 _PERMISSIONS_CACHE: dict[str, tuple[set[str], float]] = {}
-_CACHE_TTL_SECONDS = 300  # 5 minutes
+_CACHE_TTL_SECONDS = 120  # 2 minutes (reduced from 5 for faster RBAC updates)
 
 def invalidate_permission_cache(user_id: str = None):
     if user_id:
@@ -86,8 +86,8 @@ def fetch_permissions_from_db(db: Session, role_name: str) -> set[str]:
         return DEFAULT_PERMISSIONS.get(role_name, set())
 
 def get_cached_permissions(user_id: str, role: str, db: Session) -> set[str]:
-    """Returns cached permissions or fetches from DB. TTL = 5 minutes.
-    Assumption: admin permission changes take up to 5min to propagate.
+    """Returns cached permissions or fetches from DB. TTL = 2 minutes.
+    Assumption: admin permission changes take up to 2min to propagate.
     """
     now = time()
     cache_key = str(user_id)
@@ -95,6 +95,15 @@ def get_cached_permissions(user_id: str, role: str, db: Session) -> set[str]:
         perms, expires_at = _PERMISSIONS_CACHE[cache_key]
         if now < expires_at:
             return perms
+            
+    # Admin bypass: never query DB, always return all permissions
+    if role == "admin":
+        all_perms = {"dashboard:read","dashboard:insights","transactions:read",
+                     "transactions:write","transactions:delete","transactions:export",
+                     "users:read","users:manage","roles:manage","audit:read"}
+        _PERMISSIONS_CACHE[cache_key] = (all_perms, now + _CACHE_TTL_SECONDS)
+        return all_perms
+
     # Cache miss or expired — query DB
     perms = fetch_permissions_from_db(db, role)
     _PERMISSIONS_CACHE[cache_key] = (perms, now + _CACHE_TTL_SECONDS)
@@ -135,9 +144,6 @@ def require_permission(permission: str):
         db: Session = Depends(get_db)
     ) -> User:
         role_name = current_user.role.value if hasattr(current_user.role, "value") else current_user.role
-        
-        if role_name == "admin":
-            return current_user
         
         allowed = get_cached_permissions(str(current_user.id), role_name, db)
 

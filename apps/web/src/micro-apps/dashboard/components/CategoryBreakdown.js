@@ -1,3 +1,4 @@
+import React from 'react';
 import { Lock, PieChart as PieChartIcon } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { formatCurrency } from '@/shared/utils/formatters';
@@ -7,7 +8,7 @@ import { MouseGlowCard } from '@/shared/components/ui/MouseGlowCard';
 const INCOME_COLOR = '#22c55e'; // var(--color-income)
 const EXPENSE_COLOR = '#ef4444'; // var(--color-expense)
 
-export default function CategoryBreakdown({ summary, loading, locked }) {
+const CategoryBreakdown = ({ summary, loading, locked }) => {
   if (locked) {
     return (
       <div className="card relative flex flex-col items-center justify-center p-12 bg-gradient-to-br from-surface/80 to-surface/40 backdrop-blur-xl border border-white/5 rounded-2xl h-full min-h-[300px] overflow-hidden group">
@@ -110,3 +111,5 @@ export default function CategoryBreakdown({ summary, loading, locked }) {
     </motion.div>
   );
 }
+
+export default React.memo(CategoryBreakdown);
