@@ -12,6 +12,11 @@ export default function Sidebar({ user, onLogout, hasPermission }) {
   const router = useRouter();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     setIsMobileOpen(false);
@@ -159,65 +164,68 @@ export default function Sidebar({ user, onLogout, hasPermission }) {
         </button>
       </div>
 
-      <AnimatePresence>
-        {showLogoutModal && typeof document !== 'undefined' && createPortal(
-          <div
-            style={{
-              position: 'fixed',
-              inset: 0,
-              zIndex: 9999,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: 'rgba(0, 0, 0, 0.6)',
-              backdropFilter: 'blur(4px)',
-            }}
-            onClick={(e) => { if (e.target === e.currentTarget) setShowLogoutModal(false); }}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ duration: 0.2 }}
+      {mounted ? createPortal(
+        <AnimatePresence>
+          {showLogoutModal && (
+            <div
               style={{
-                background: '#111827',
-                border: '1px solid rgba(0,212,170,0.2)',
-                borderRadius: '16px',
-                padding: '2rem',
-                width: '360px',
-                maxWidth: '90vw',
-                textAlign: 'center',
-                boxShadow: '0 8px 32px rgba(0,212,170,0.15)',
+                position: 'fixed',
+                inset: 0,
+                zIndex: 9999,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                backdropFilter: 'blur(4px)',
               }}
+              onClick={(e) => { if (e.target === e.currentTarget) setShowLogoutModal(false); }}
             >
-              <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4 mx-auto">
-                <LogOut className="w-6 h-6 text-[#ef4444]" />
-              </div>
-              <h2 className="font-syne text-xl font-bold text-white mb-2">Sign Out</h2>
-              <p className="text-sm text-gray-400 mb-6">Are you sure you want to sign out of Zorvyn Finance?</p>
-              
-              <div className="flex w-full gap-3">
-                <button 
-                  onClick={() => setShowLogoutModal(false)}
-                  className="flex-1 py-2.5 px-4 rounded-lg font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition-colors btn-ghost"
-                >
-                  Cancel
-                </button>
-                <button 
-                  onClick={() => {
-                    setShowLogoutModal(false);
-                    onLogout();
-                  }}
-                  className="flex-1 py-2.5 px-4 rounded-lg font-semibold text-white bg-[#ef4444] hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20"
-                >
-                  Sign Out
-                </button>
-              </div>
-            </motion.div>
-          </div>,
-          document.body
-        )}
-      </AnimatePresence>
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                style={{
+                  background: '#111827',
+                  border: '1px solid rgba(0,212,170,0.2)',
+                  borderRadius: '16px',
+                  padding: '2rem',
+                  width: '360px',
+                  maxWidth: '90vw',
+                  textAlign: 'center',
+                  boxShadow: '0 8px 32px rgba(0,212,170,0.15)',
+                }}
+              >
+                <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4 mx-auto">
+                  <LogOut className="w-6 h-6 text-[#ef4444]" />
+                </div>
+                <h2 className="font-syne text-xl font-bold text-white mb-2">Sign Out</h2>
+                <p className="text-sm text-gray-400 mb-6">Are you sure you want to sign out of Zorvyn Finance?</p>
+                
+                <div className="flex w-full gap-3">
+                  <button 
+                    onClick={() => setShowLogoutModal(false)}
+                    className="flex-1 py-2.5 px-4 rounded-lg font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition-colors btn-ghost"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setShowLogoutModal(false);
+                      onLogout();
+                    }}
+                    className="flex-1 py-2.5 px-4 rounded-lg font-semibold text-white bg-[#ef4444] hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      ) : null}
     </aside>
   </>
   );

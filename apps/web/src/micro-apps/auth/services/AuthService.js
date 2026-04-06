@@ -15,6 +15,7 @@ export function clearAuthToken() {
   if (typeof window !== 'undefined') {
     window.__zorvyn_token = null;
     sessionStorage.removeItem('zorvyn_token');
+    localStorage.removeItem('zorvyn_token');
   }
   clearUserCache();
 }

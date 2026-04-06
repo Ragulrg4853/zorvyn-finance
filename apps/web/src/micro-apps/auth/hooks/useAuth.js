@@ -69,9 +69,17 @@ export function useAuth() {
   }, [router]);
 
   const logout = useCallback(async () => {
-    await AuthService.logout();
-    setUser(null);
-    router.push(ROUTES.LOGIN);
+    try {
+      await AuthService.logout();
+    } catch (err) {
+      // safe fallback if backend fails
+      console.warn("Backend logout failed, clearing local session safely", err);
+    } finally {
+      AuthService.clearUserCache();
+      AuthService.clearAuthToken();
+      setUser(null);
+      router.push(ROUTES.LOGIN);
+    }
   }, [router]);
 
   const hasPermission = useCallback((permission) => {
