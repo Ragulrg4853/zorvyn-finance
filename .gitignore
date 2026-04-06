@@ -10,3 +10,10 @@ node_modules/
 .env.local
 .DS_Store
 Thumbs.db
+CLAUDE.md
+COPILOT_GUIDE.md
+AGENTS.md
+HIERARCHY.md
+ARCHITECTURE.md
+API_CONSTITUTIONS.md
+DECISIONS.md
