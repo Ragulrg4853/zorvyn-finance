@@ -18,7 +18,8 @@ from shared.utils.error_taxonomy import AppError, ErrorCode
 from shared.utils.validators import validate_date_range
 from fastapi import status
 
-router = APIRouter()
+from pydantic import BaseModel, ConfigDict, field_validator
+import json
 
 class dictType(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -34,6 +35,16 @@ class AuditLogRead(BaseModel):
     ip_address: Optional[str] = None
     correlation_id: Optional[str] = None
     created_at: datetime
+    
+    @field_validator("old_value", "new_value", mode="before")
+    @classmethod
+    def parse_json(cls, v):
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except Exception:
+                return {}
+        return v
     
     model_config = {"from_attributes": True}
 
