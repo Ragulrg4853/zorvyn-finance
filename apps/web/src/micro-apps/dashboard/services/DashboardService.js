@@ -17,7 +17,7 @@ export async function fetchInsights(params = {}) {
 export function connectLiveStream(onUpdate) {
   const controller = new AbortController();
   const token = typeof window !== 'undefined' ? window.__zorvyn_token : null;
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:8000');
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://zorvyn-finance-production.up.railway.app';
 
   if (!token) return () => {};
 

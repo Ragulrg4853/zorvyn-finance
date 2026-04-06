@@ -11,13 +11,13 @@
 'use client';
 import axios from 'axios';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://zorvyn-finance-production.up.railway.app';
 if (!BASE_URL) {
   console.error('NEXT_PUBLIC_API_URL is not set. Check environment variables.');
 }
 
 const apiClient = axios.create({
-  baseURL: BASE_URL || 'http://localhost:8000',
+  baseURL: BASE_URL,
   timeout: 15000,
   headers: { 'Content-Type': 'application/json' },
 });
