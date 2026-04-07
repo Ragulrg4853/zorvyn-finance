@@ -8,6 +8,11 @@ This submission covers all 6 core requirements and all 7 optional enhancements
 from the assignment brief — including a working deployment, a complete Next.js 
 frontend, and a dynamic database-backed RBAC system with runtime permission 
 management. No local setup is required to evaluate the full application.
+The platform includes **runtime-synchronized role-based access control (RBAC)** across both the **backend authorization layer** and the **frontend navigation / action layer**.
+
+This means permissions are not only enforced at the API level, but also directly control **what each user can see and do in the UI** — including sidebar modules, pages, buttons, actions, and data views.
+
+When an admin updates a role’s permissions (for example, granting `audit:read` to Analysts or revoking `user:create` from a role), those changes are persisted in the database and reflected in the application without redeployment. Already logged-in users receive the updated access state on refresh, ensuring the UI remains aligned with backend authorization at all times.
 ---
 
 ## Live Demo
@@ -113,8 +118,31 @@ zorvyn-finance/
 
 ## Key Design Decisions
 
-### 1. Database-Backed Dynamic RBAC (Not Hardcoded Roles)
-Permissions are stored in a relational junction table (`role_permissions`) and loaded at runtime. Admins can grant or revoke individual permissions (e.g. `dashboard:insights`, `transactions:export`) for any role through the UI. Changes propagate within 2 minutes via TTL cache invalidation — no redeploy required.
+## 1. Database-Backed Dynamic RBAC with UI-Level Permission Synchronization
+
+Permissions are stored in a relational junction table (`role_permissions`) and loaded at runtime. Admins can grant or revoke individual permissions (for example `dashboard:insights`, `transactions:export`, `audit:read`, `users:create`, `users:update`) through the **Roles & Permissions** admin panel UI.
+Changes are persisted immediately in the database and reflected in the frontend on refresh. Backend authorization remains synchronized through cache-safe permission reloading.
+
+Unlike static RBAC implementations that only protect backend endpoints, this system enforces permissions in **two layers**:
+
+- **Backend enforcement** → Every protected API route is guarded with permission middleware
+- **Frontend enforcement** → Sidebar items, pages, buttons, actions, and controls are rendered only if the user has the required permission
+
+This makes the UI **permission-aware, independent, and secure by default**.
+
+### Example behavior
+- If Admin grants `audit:read` to the **Analyst** role:
+  - the database is updated
+  - the Analyst can immediately access the **Audit Logs** feature after refresh
+  - the **Audit Logs** navigation item becomes visible in the sidebar
+- If Admin revokes `users:read` from a role:
+  - the **User Management** section disappears from the sidebar and cannot be opened
+- If Admin revokes `users:create`:
+  - the **Create User** button disappears
+- If Admin revokes `users:update`:
+  - update controls become disabled or hidden depending on the action context
+
+This ensures the frontend never exposes functionality that the backend would reject anyway.
 
 ```
 roles ──< role_permissions >── permissions
@@ -133,6 +161,29 @@ Server-Sent Events are unidirectional (server → client), require no handshake 
 
 ### 5. Soft Delete Everywhere
 Financial records are never physically removed. `DELETE /transactions/{id}` sets `is_deleted = True`. This preserves audit trails, supports point-in-time reporting, and prevents accidental data loss. All queries filter `WHERE is_deleted = FALSE` at the repository layer.
+
+---
+
+## Runtime Permission Propagation
+
+A major requirement of this project was ensuring that **permission changes made by Admin are reflected in the actual working application behavior**, not just stored in the database.
+
+This platform supports **runtime permission propagation**:
+
+- Admin updates a role’s permissions from the **Roles & Permissions** screen
+- The backend persists the new permission mapping into `role_permissions`
+- The frontend derives accessible modules and actions from the latest permission set
+- On refresh, already logged-in users immediately see their updated access state
+- Revoked permissions cause related UI sections to become **invisible or unavailable**, rather than exposing controls that later fail with authorization errors
+
+### Supported permission-driven UI behavior
+- Sidebar sections appear/disappear based on role permissions
+- Page access is protected at route level
+- Action buttons (Create / Edit / Delete / Export / Commit) are permission-gated
+- Dashboard insights are shown only if `dashboard:insights` is present
+- Admin modules are segmented by fine-grained permissions instead of a single hardcoded “admin only” switch
+
+This creates a much more realistic enterprise access-control model where **permissions drive product behavior dynamically**.
 
 ---
 
@@ -216,24 +267,26 @@ Every error response carries a machine-readable code:
 
 ---
 
-## Role Permission Matrix
+## Role Permission Matrix (Default Seed State)
 
 | Permission | Viewer | Analyst | Admin |
-|---|---|---|---|
+|---|---:|---:|---:|
 | `dashboard:read` | ✅ | ✅ | ✅ |
 | `dashboard:insights` | ❌ | ✅ | ✅ |
 | `transactions:read` | ❌ | ✅ | ✅ |
 | `transactions:write` | ❌ | ❌ | ✅ |
 | `transactions:delete` | ❌ | ❌ | ✅ |
 | `transactions:export` | ❌ | ✅ | ✅ |
+| `notifications:read` | ❌ | ❌ | ✅ |
 | `users:read` | ❌ | ❌ | ✅ |
-| `roles:manage` | ❌ | ❌ | ✅ |
+| `users:create` | ❌ | ❌ | ✅ |
+| `users:update` | ❌ | ❌ | ✅ |
+| `roles:read` | ❌ | ❌ | ✅ |
+| `roles:update` | ❌ | ❌ | ✅ |
 | `audit:read` | ❌ | ❌ | ✅ |
-| `user:delete` | ❌ | ❌ | ✅ |
-| `user:create` | ❌ | ❌ | ✅ |
-| `user:update` | ❌ | ❌ | ✅ |
 
-
+> These are only the **default seeded permissions**.  
+> The actual system is **fully dynamic** — Admin can grant or revoke any permission for Analyst or Viewer at runtime, and the application UI/API behavior will adapt accordingly.
 > Permissions are stored in the database and can be dynamically adjusted by an admin at runtime through the Roles & Permissions panel. Changes take effect within 2 minutes without a redeploy.
 
 ---
@@ -256,10 +309,33 @@ Every error response carries a machine-readable code:
 - **CSV Export:** Streams directly from database cursor — O(1) memory, handles millions of records
 - **Role-gated UI:** Create/Edit/Delete buttons only render for admin; Export button only renders for analyst+
 
-### Administration
-- **User Management:** Full user table with UUID, role badge, active/inactive status, and created date. Admin can create users, toggle active status, and change roles in real time
-- **Roles & Permissions:** Interactive permission matrix with pending change tracking, "Commit Changes" button, and 2-minute cache propagation
-- **System Audit Logs:** Immutable ledger of all platform mutations — who did what, when, and to which resource — with action filter and date range
+## Administration
+
+### User Management
+- Full user table with UUID, role badge, active/inactive status, and created date
+- Admin can create users, toggle active status, and change roles in real time
+- Visibility and actions are permission-gated (`users:read`, `users:create`, `users:update`)
+
+### Roles & Permissions
+- Interactive permission matrix backed by the database
+- Admin can grant or revoke permissions for any role at runtime
+- Changes are persisted to `role_permissions` and reflected in actual application behavior
+- Supports fine-grained feature gating instead of hardcoded role assumptions
+
+### System Audit Logs
+- Immutable ledger of all platform mutations — who did what, when, and to which resource
+- Fully permission-controlled through `audit:read`
+- Can be dynamically exposed to non-admin roles if granted by Admin
+
+### Permission-Aware UI
+The frontend is built so that permissions affect **visibility and functionality**, not just API access.
+
+Examples:
+- Revoking `users:read` removes **User Management** from the sidebar
+- Revoking `users:create` hides the **Create User** action
+- Revoking `users:update` disables or hides update controls
+- Granting `audit:read` makes **Audit Logs** appear automatically for that role
+- Granting dashboard or transaction permissions reveals only the corresponding accessible modules
 
 ### Security
 - Passwords hashed with bcrypt (cost factor 12)
@@ -489,6 +565,23 @@ NEXT_PUBLIC_API_URL=https://zorvyn-finance-production.up.railway.app
 
 ---
 
+## Edge Cases Covered
+
+The permission system was implemented and validated with real runtime scenarios, including:
+
+- Already logged-in users receiving updated UI access after refresh
+- Revoked permissions immediately hiding restricted sections from the UI
+- Route-level protection preventing direct navigation to unauthorized pages
+- Button/action-level protection even when parent pages remain accessible
+- Partial admin visibility (for example, allowing Audit Logs without exposing full Administration access)
+- Prevention of stale UI exposing controls that the backend would reject
+- Consistent permission behavior across sidebar, page rendering, action controls, and API calls
+- Safe fallback behavior when permission sets are missing or partially loaded
+
+This ensures the application behaves like a real-world enterprise internal tool rather than a demo with hardcoded role screens.
+
+---
+
 ## Project Highlights
 
 - **Zero hardcoded role checks** anywhere in the codebase — all access decisions go through `require_permission("resource:action")`
@@ -497,6 +590,8 @@ NEXT_PUBLIC_API_URL=https://zorvyn-finance-production.up.railway.app
 - **Machine-readable error codes** on every failure — clients can programmatically handle `AUTH_003` vs `RBAC_001` vs `FINANCE_001`
 - **Correlation ID on every request** — every log entry, response header, and error body carries the same UUID for complete end-to-end traceability
 - **Fully deployed and accessible** — live demo available above, no local setup required to evaluate
+- Runtime permission-driven UI — Admin can grant/revoke permissions and the actual frontend navigation, pages, and actions adapt accordingly after refresh
+- Fine-grained frontend + backend RBAC parity — no mismatch between what the UI exposes and what the API allows
 
 ---
 
