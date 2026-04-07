@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { useAuth } from '../../auth/hooks/useAuth';
 import ErrorState from '../../../shared/components/feedback/ErrorState';
 
-export function UserTable({ users, loading, updateUser, activateUser, deactivateUser, filters, onFilterChange, meta, error, onCreateUser }) {
+export const UserTable = React.memo(function UserTable({ users, loading, updateUser, activateUser, deactivateUser, filters, onFilterChange, meta, error, onCreateUser }) {
   const { user: currentUser, hasPermission } = useAuth();
 
   if (error) {
@@ -209,4 +209,4 @@ export function UserTable({ users, loading, updateUser, activateUser, deactivate
       )}
     </div>
   );
-}
+});

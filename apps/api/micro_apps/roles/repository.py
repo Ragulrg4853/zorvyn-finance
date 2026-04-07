@@ -30,4 +30,5 @@ def assign_permissions(db: Session, role_id: UUID, grant_ids: List[UUID], revoke
         ).delete(synchronize_session=False)
             
     db.commit()
+    db.expire_all()
     return get_role_by_id(db, role_id)

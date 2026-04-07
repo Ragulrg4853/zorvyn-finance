@@ -3,7 +3,7 @@ import { Lock, Shield, User, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { invalidateCache } from '../services/RoleService';
 
-export function PermissionMatrix({ roles, permissions, onChangePermissions, loading }) {
+export const PermissionMatrix = React.memo(function PermissionMatrix({ roles, permissions, onChangePermissions, loading }) {
   const [localRoles, setLocalRoles] = useState([]);
   const [toast, setToast] = useState(null);
   const [pendingChanges, setPendingChanges] = useState({});
@@ -239,4 +239,4 @@ export function PermissionMatrix({ roles, permissions, onChangePermissions, load
       </AnimatePresence>
     </div>
   );
-}
+});

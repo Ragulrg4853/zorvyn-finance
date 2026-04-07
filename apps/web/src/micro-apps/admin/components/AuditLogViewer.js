@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { Activity, ShieldAlert, Monitor, Globe, Search, User, Filter, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-export function AuditLogViewer({ logs, loading, meta, filters, onFilterChange, users }) {
+export const AuditLogViewer = React.memo(function AuditLogViewer({ logs, loading, meta, filters, onFilterChange, users }) {
   
   const handleFilterUpdate = (key, value) => {
     onFilterChange({ ...filters, [key]: value, cursor: null });
@@ -156,23 +156,45 @@ export function AuditLogViewer({ logs, loading, meta, filters, onFilterChange, u
       </div>
 
       {/* Pagination Footer */}
-      {(!loading && (filters.cursor || meta?.next_cursor)) && (
-        <div className="px-6 py-4 border-t border-[var(--color-border)] bg-[rgba(10,15,30,0.95)] shrink-0 flex items-center justify-between">
-          <p className="text-sm text-gray-500 font-mono">
-            {meta?.has_more ? 'More logs available' : 'End of ledger'}
-          </p>
+      {meta && (
+        <div className="px-6 py-4 bg-[rgba(12,18,34,0.95)] backdrop-blur-md border-t border-[var(--color-border)] flex flex-col md:flex-row items-center justify-between text-sm gap-4 relative z-20 shrink-0">
+          <div className="flex items-center gap-3">
+            <span className="text-gray-400 font-mono text-xs hidden sm:inline-block">Show per page:</span>
+            <select 
+              value={meta.page_size || 50}
+              onChange={(e) => onFilterChange({ ...filters, page_size: Number(e.target.value), page: 1, cursor: null })}
+              className="bg-white/5 border border-white/10 text-white rounded text-xs px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer hover:bg-white/10 transition-colors"
+            >
+              {[10, 25, 50, 100].map(size => <option key={size} value={size} className="bg-[#0c1222] text-white">Show {size}</option>)}
+            </select>
+          </div>
           
-          <div className="flex gap-2">
-             <button
-                disabled={loading || !meta?.next_cursor}
-                onClick={handleNextPage}
-                className="px-4 py-2 rounded-lg border border-[var(--color-primary)] bg-[var(--color-primary)]/10 text-[var(--color-primary)] text-sm font-medium hover:bg-[var(--color-primary)] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-             >
-               Load Next Set
-             </button>
+          <span className="text-gray-400 font-mono text-xs text-center flex-1">
+            Showing <span className="text-white font-bold">{Math.min(((meta.page || meta.current_page || 1) - 1) * (meta.page_size || 50) + 1, meta.total || 0)}</span> - <span className="text-white font-bold">{Math.min((meta.page || meta.current_page || 1) * (meta.page_size || 50), meta.total || 0)}</span> of <span className="text-white font-bold">{meta.total || 0}</span> records
+          </span>
+
+          <div className="flex items-center gap-2 font-mono text-xs text-gray-400 mr-2">
+            Page <span className="text-white font-bold">{meta.page || meta.current_page || 1}</span> of <span className="text-white font-bold">{meta.total_pages || 1}</span>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <button 
+              className="h-8 px-4 rounded-lg bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-all text-xs font-semibold tracking-wider uppercase border border-transparent disabled:border-white/5"
+              disabled={(meta.page || meta.current_page || 1) <= 1}
+              onClick={() => onFilterChange({ ...filters, page: (meta.page || meta.current_page || 1) - 1, cursor: null })}
+            >
+              Prev
+            </button>
+            <button 
+              className="h-8 px-4 rounded-lg bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-all text-xs font-semibold tracking-wider uppercase border border-transparent disabled:border-white/5"
+              disabled={(meta.page || meta.current_page || 1) >= (meta.total_pages || 1)}
+              onClick={() => onFilterChange({ ...filters, page: (meta.page || meta.current_page || 1) + 1, cursor: null })}
+            >
+              Next
+            </button>
           </div>
         </div>
       )}
     </div>
   );
-}
+});

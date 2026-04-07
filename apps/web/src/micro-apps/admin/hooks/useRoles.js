@@ -54,7 +54,7 @@ export function useRoles() {
 
   const assignPermissions = async (roleId, payload) => {
     await apiAssignPermissions(roleId, payload);
-    fetchRolesData(); // refresh roles and permissions
+    await fetchRolesData(); // refresh roles and permissions
   };
 
   return {

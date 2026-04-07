@@ -1,6 +1,6 @@
 ﻿/**
  * Admin page â€” user management, admin only.
- * Copilot Session 14: Implement per COPILOT_GUIDE.md Session 14 direction.
+ 
  *
  * Layout: Navbar + "User Management" heading + "Create User" button
  *         + UserTable with role badges, status badges, action column
@@ -29,7 +29,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import * as UserService from '../../micro-apps/admin/services/UserService';
 
 function AdminPageContent() {
-  const { user, hasPermission, logout } = useAuth();
+  const { user, hasPermission, logout, refetchUser } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
   
@@ -170,7 +170,14 @@ function AdminPageContent() {
                   <PermissionMatrix 
                     roles={roles} 
                     permissions={permissions} 
-                    onChangePermissions={assignPermissions} 
+                    onChangePermissions={async (roleId, payload) => {
+                      await assignPermissions(roleId, payload);
+                      if (user?.role_id === roleId || user?.role) {
+                        await refetchUser();
+                      } else {
+                        await refetchUser(); // Ensure all active token data is refreshed
+                      }
+                    }} 
                     loading={rolesLoading} 
                   />
                 )}
