@@ -336,6 +336,7 @@ updated_at (TIMESTAMPTZ) created_by (FK → users)  correlation_id (UUID)
 
 
 ### Permission Commit — Changes Take Effect in Real Time
+<img width="1910" height="976" alt="image" src="https://github.com/user-attachments/assets/e12a5c1c-72ec-4cd5-aea7-000329c74c3a" />
 
 
 ### System Audit Logs — Immutable Activity Ledger
