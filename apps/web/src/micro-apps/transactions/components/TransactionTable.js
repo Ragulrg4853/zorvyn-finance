@@ -29,7 +29,8 @@ const TransactionTable = ({
   loading, 
   error, 
   meta, 
-  canWrite, 
+  canWrite,
+  canDelete, 
   onEdit, 
   onDelete, 
   onSort, 
@@ -114,7 +115,7 @@ const TransactionTable = ({
               <SortableHeader field="category" label="Category" sortField={sortField} sortOrder={sortOrder} onSort={onSort} />
               <SortableHeader field="amount" label="Amount" sortField={sortField} sortOrder={sortOrder} onSort={onSort} />
               <th className="px-6 py-4">Notes</th>
-              {canWrite && <th className="px-6 py-4 text-right">Actions</th>}
+              {(canWrite || canDelete) && <th className="px-6 py-4 text-right">Actions</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5 text-sm text-gray-300">
@@ -159,9 +160,10 @@ const TransactionTable = ({
                 <td className="px-6 py-4 max-w-[200px] truncate text-gray-500 group-hover:text-gray-300 transition-colors" title={tx.notes}>
                   {tx.notes || '-'}
                 </td>
-                {canWrite && (
-                  <td className="px-6 py-4 text-right opacity-0 group-hover:opacity-100 transition-opacity focus-within:opacity-100">
-                    <div className="flex items-center justify-end gap-3">
+                  {(canWrite || canDelete) && (
+                    <td className="px-6 py-4 text-right opacity-0 group-hover:opacity-100 transition-opacity focus-within:opacity-100">
+                      <div className="flex items-center justify-end gap-3">
+                        {canWrite && (
                       <button 
                         onClick={() => onEdit(tx)} 
                         className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/5 hover:bg-[var(--color-primary)] hover:text-white text-gray-400 transition-all" 
@@ -169,13 +171,16 @@ const TransactionTable = ({
                       >
                         <Pencil size={14} />
                       </button>
-                      <button 
-                        onClick={() => onDelete(tx.id)} 
-                        className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/5 hover:bg-red-500/80 hover:text-white text-gray-400 transition-all" 
-                        title="Delete Transaction"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                        )}
+                        {canDelete && (
+                        <button 
+                          onClick={() => onDelete(tx.id)} 
+                          className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/5 hover:bg-red-500/80 hover:text-white text-gray-400 transition-all" 
+                          title="Delete Transaction"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                        )}
                     </div>
                   </td>
                 )}

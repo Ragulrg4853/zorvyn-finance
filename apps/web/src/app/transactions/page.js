@@ -1,6 +1,6 @@
 /**
  * Transactions page — all authenticated roles (viewers see read-only table).
- * Copilot Session 12: Implement per COPILOT_GUIDE.md Session 12 direction.
+ 
  *
  * Layout: Navbar + toolbar (filters left, export+new buttons right) + TransactionTable + pagination
  * Conditional: "New Transaction" button only for admin, Export only for analyst+admin
@@ -31,7 +31,8 @@ export default function TransactionsPage() {
   const [toastMessage, setToastMessage] = useState('');
 
   const canWrite = hasPermission('transactions:write');
-  const canExport = user?.role === 'admin' || user?.role === 'analyst';
+  const canDelete = hasPermission('transactions:delete');
+  const canExport = hasPermission('transactions:export');
 
   const handleEdit = (tx) => {
     setEditingTransaction(tx);
@@ -140,6 +141,7 @@ export default function TransactionsPage() {
               error={error}
               meta={meta}
               canWrite={canWrite}
+              canDelete={canDelete}
               sortField={filters.sort}
               sortOrder={filters.order}
               onEdit={handleEdit}

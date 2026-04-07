@@ -1,6 +1,6 @@
 """
 RBAC middleware — permission-based access control.
-Constitution: CLAUDE.md #6 (security-by-design), AGENTS.md (permission strings)
+
 
 Usage in routers:
     current_user: User = Depends(require_permission("transactions:write"))
@@ -53,6 +53,9 @@ DEFAULT_PERMISSIONS: dict[str, set[str]] = {
         "transactions:delete",
         "transactions:export",
         "users:read",
+        "users:create",
+        "users:update",
+        "users:delete",
         "users:manage",
         "roles:manage",
         "audit:read",
@@ -100,7 +103,7 @@ def get_cached_permissions(user_id: str, role: str, db: Session) -> set[str]:
     if role == "admin":
         all_perms = {"dashboard:read","dashboard:insights","transactions:read",
                      "transactions:write","transactions:delete","transactions:export",
-                     "users:read","users:manage","roles:manage","audit:read"}
+                     "users:read","users:create","users:update","users:delete","users:manage","roles:manage","audit:read"}
         _PERMISSIONS_CACHE[cache_key] = (all_perms, now + _CACHE_TTL_SECONDS)
         return all_perms
 

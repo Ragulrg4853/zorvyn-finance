@@ -1,8 +1,6 @@
 """
-Users router — HTTP contract only. All endpoints require users:manage.
-Constitution: CLAUDE.md #26, API_CONSTITUTIONS.md #7
+Users router — HTTP contract only. All endpoints require users:read/create/update/delete.
 
-Copilot direction — implement in Session 4:
   GET    /            Query: role, is_active, page, page_size
   POST   /            Body: UserCreate -> 201 UserRead
   GET    /{user_id}   -> UserRead or 404
@@ -26,7 +24,7 @@ from shared.utils.validators import calculate_total_pages
 from micro_apps.users import service as users_service
 from micro_apps.users.schemas import UserCreate, UserUpdate, UserRead
 
-router = APIRouter(dependencies=[Depends(require_permission("users:manage"))])
+router = APIRouter(dependencies=[Depends(require_permission("users:read"))])
 
 @router.get("")
 def list_users(
@@ -54,7 +52,7 @@ def list_users(
 @router.post("", status_code=status.HTTP_201_CREATED)
 def create_user(
     payload: UserCreate,
-    current_user: User = Depends(require_permission("users:manage")),
+    current_user: User = Depends(require_permission("users:create")),
     db: Session = Depends(get_db),
     correlation_id: str = Depends(get_correlation_id),
 ):
@@ -82,7 +80,7 @@ def get_user(
 def update_user(
     user_id: UUID,
     payload: UserUpdate,
-    current_user: User = Depends(require_permission("users:manage")),
+    current_user: User = Depends(require_permission("users:update")),
     db: Session = Depends(get_db),
     correlation_id: str = Depends(get_correlation_id),
 ):
@@ -96,7 +94,7 @@ def update_user(
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 def deactivate_user_delete(
     user_id: UUID,
-    current_user: User = Depends(require_permission("users:manage")),
+    current_user: User = Depends(require_permission("users:delete")),
     correlation_id: str = Depends(get_correlation_id),
     db: Session = Depends(get_db),
 ):
@@ -106,7 +104,7 @@ def deactivate_user_delete(
 @router.patch("/{user_id}/activate")
 def activate_user(
     user_id: UUID,
-    current_user: User = Depends(require_permission("users:manage")),
+    current_user: User = Depends(require_permission("users:update")),
     db: Session = Depends(get_db),
     correlation_id: str = Depends(get_correlation_id),
 ):
@@ -120,7 +118,7 @@ def activate_user(
 @router.patch("/{user_id}/deactivate")
 def deactivate_user_patch(
     user_id: UUID,
-    current_user: User = Depends(require_permission("users:manage")),
+    current_user: User = Depends(require_permission("users:update")),
     db: Session = Depends(get_db),
     correlation_id: str = Depends(get_correlation_id),
 ):

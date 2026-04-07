@@ -13,7 +13,7 @@ jest.mock('../../src/micro-apps/auth/services/AuthService');
 jest.mock('../../src/shared/lib/constants', () => ({
   ROLE_PERMISSIONS: {
     viewer: ['dashboard:read', 'transactions:read'],
-    admin: ['dashboard:read', 'transactions:read', 'transactions:write', 'users:manage', 'roles:manage']
+    admin: ['dashboard:read', 'transactions:read', 'transactions:write', 'users:read', 'users:create', 'users:update', 'users:delete', 'roles:manage']
   },
   ROUTES: {
     LOGIN: '/login',

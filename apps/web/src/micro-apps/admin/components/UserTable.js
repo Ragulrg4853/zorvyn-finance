@@ -59,7 +59,7 @@ export const UserTable = React.memo(function UserTable({ users, loading, updateU
           />
         </div>
         
-        {hasPermission('users:write') && onCreateUser && (
+        {hasPermission('users:create') && onCreateUser && (
           <button 
             className="btn-primary flex items-center justify-center gap-2 h-9 px-4 rounded-lg font-medium bg-[var(--color-primary)] text-white text-sm whitespace-nowrap shadow-[0_0_10px_rgba(var(--color-primary-rgb),0.3)] hover:shadow-[0_0_15px_rgba(var(--color-primary-rgb),0.5)] transition-all shrink-0"
             onClick={onCreateUser}
@@ -143,6 +143,7 @@ export const UserTable = React.memo(function UserTable({ users, loading, updateU
                     
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity" title={isSelf ? "Cannot modify your own account" : ""}>
+                        {hasPermission('users:update') && (
                         <select
                           className="h-8 px-2 rounded-md bg-white/5 border border-white/10 text-gray-300 text-xs font-semibold uppercase tracking-wide focus:outline-none focus:border-[var(--color-primary)] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                           value={usr.role}
@@ -153,26 +154,29 @@ export const UserTable = React.memo(function UserTable({ users, loading, updateU
                           <option value="analyst" className="bg-[#0c1222]">Analyst</option>
                           <option value="admin" className="bg-[#0c1222]">Admin</option>
                         </select>
-                        {usr.is_active ? (
-                          <button 
-                            onClick={() => {
-                              if (window.confirm(`Deactivate ${usr.username}? They will lose access immediately.`)) {
-                                deactivateUser(usr.id);
-                              }
-                            }} 
-                            disabled={isSelf}
-                            className="h-8 px-3 rounded-md flex items-center justify-center gap-2 bg-white/5 border border-red-500/50 hover:bg-red-500/80 hover:text-white text-red-400 disabled:opacity-30 disabled:hover:bg-white/5 transition-all text-xs font-semibold tracking-wide uppercase" 
-                          >
-                            <Ban size={12} /> Deactivate
-                          </button>
-                        ) : (
-                          <button 
-                            onClick={() => activateUser(usr.id)} 
-                            disabled={isSelf}
-                            className="h-8 px-3 rounded-md flex items-center justify-center gap-2 bg-white/5 border border-green-500/50 hover:bg-green-500/80 hover:text-white text-green-400 disabled:opacity-30 disabled:hover:bg-white/5 transition-all text-xs font-semibold tracking-wide uppercase" 
-                          >
-                            <Check size={12} /> Activate
-                          </button>
+                        )}
+                        {hasPermission('users:update') && (
+                          usr.is_active ? (
+                            <button 
+                              onClick={() => {
+                                if (window.confirm(`Deactivate ${usr.username}? They will lose access immediately.`)) {
+                                  deactivateUser(usr.id);
+                                }
+                              }} 
+                              disabled={isSelf}
+                              className="h-8 px-3 rounded-md flex items-center justify-center gap-2 bg-white/5 border border-red-500/50 hover:bg-red-500/80 hover:text-white text-red-400 disabled:opacity-30 disabled:hover:bg-white/5 transition-all text-xs font-semibold tracking-wide uppercase" 
+                            >
+                              <Ban size={12} /> Deactivate
+                            </button>
+                          ) : (
+                            <button 
+                              onClick={() => activateUser(usr.id)} 
+                              disabled={isSelf}
+                              className="h-8 px-3 rounded-md flex items-center justify-center gap-2 bg-white/5 border border-green-500/50 hover:bg-green-500/80 hover:text-white text-green-400 disabled:opacity-30 disabled:hover:bg-white/5 transition-all text-xs font-semibold tracking-wide uppercase" 
+                            >
+                              <Check size={12} /> Activate
+                            </button>
+                          )
                         )}
                       </div>
                     </td>

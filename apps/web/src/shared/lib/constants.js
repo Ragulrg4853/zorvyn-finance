@@ -1,6 +1,6 @@
 /**
  * Application-wide constants.
- * Constitution: CLAUDE.md #3 (explicit), #38 (configuration over hardcoding)
+ 
  */
 export const ROLES = Object.freeze({
   VIEWER: 'viewer', ANALYST: 'analyst', ADMIN: 'admin',
@@ -14,6 +14,9 @@ export const PERMISSIONS = Object.freeze({
   TRANSACTIONS_DELETE: 'transactions:delete',
   TRANSACTIONS_EXPORT: 'transactions:export',
   USERS_READ:          'users:read',
+  USERS_CREATE:        'users:create',
+  USERS_UPDATE:        'users:update',
+  USERS_DELETE:        'users:delete',
   USERS_MANAGE:        'users:manage',
   ROLES_MANAGE:        'roles:manage',
   AUDIT_READ:          'audit:read',
