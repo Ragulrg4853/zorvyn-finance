@@ -1,7 +1,13 @@
 # Zorvyn Finance — Finance Data Processing & Access Control Platform
 
-> An enterprise-grade financial ledger and insight dashboard built with a security-first, permission-driven architecture. Designed for organizations that require strict separation of concerns across employee access tiers.
+> An enterprise-grade financial ledger and insight dashboard built with a 
+security-first, permission-driven architecture. Designed for organizations 
+that require strict separation of concerns across employee access tiers.
 
+This submission covers all 6 core requirements and all 7 optional enhancements 
+from the assignment brief — including a working deployment, a complete Next.js 
+frontend, and a dynamic database-backed RBAC system with runtime permission 
+management. No local setup is required to evaluate the full application.
 ---
 
 ## Live Demo
@@ -295,6 +301,60 @@ updated_at (TIMESTAMPTZ) created_by (FK → users)  correlation_id (UUID)
 
 ---
 
+## Screenshots
+
+### Login
+<img width="1908" height="972" alt="image" src="https://github.com/user-attachments/assets/c014e4f9-0964-4ccf-abe7-31087dfe1f14" />
+
+
+### Dashboard — Financial Insights with Real-Time KPIs
+<img width="1915" height="979" alt="image" src="https://github.com/user-attachments/assets/70b73794-8f88-4ae1-9bcb-156b57581210" />
+
+
+### Transactions — Advanced Filtering and Pagination
+<img width="1915" height="979" alt="image" src="https://github.com/user-attachments/assets/1c9e0d3a-46b4-473e-a545-20dbd85c5b70" />
+
+
+### New Transaction Form
+<img width="1903" height="976" alt="image" src="https://github.com/user-attachments/assets/b041d2d6-c44b-4034-8a9a-42a56e99dc09" />
+
+
+### Edit Transaction Form
+<img width="1913" height="977" alt="image" src="https://github.com/user-attachments/assets/b185e2e7-e759-4f99-b0f5-333b854d500e" />
+
+
+### Administration — User Management
+<img width="1916" height="974" alt="image" src="https://github.com/user-attachments/assets/6cf42967-7d55-48ea-b61b-52962d17c9ed" />
+
+
+### Create New User
+<img width="1902" height="976" alt="image" src="https://github.com/user-attachments/assets/121485aa-57d7-4291-a22e-334a6f1da50b" />
+
+
+### Roles & Permissions — Dynamic RBAC Matrix
+<img width="1918" height="984" alt="image" src="https://github.com/user-attachments/assets/1cc47a9d-2d6f-4724-b79a-c77669aef163" />
+
+
+### Permission Commit — Changes Take Effect in Real Time
+
+
+### System Audit Logs — Immutable Activity Ledger
+<img width="1911" height="977" alt="image" src="https://github.com/user-attachments/assets/d1ab24e6-6612-4aad-b45b-eb8a5301dc23" />
+
+
+### Real-Time Notifications
+<img width="1919" height="974" alt="image" src="https://github.com/user-attachments/assets/352b25f0-e98f-4cde-b55a-57545bfd7a53" />
+
+### Logout Window
+<img width="1892" height="981" alt="image" src="https://github.com/user-attachments/assets/353a84cf-2dd5-45a8-b81c-6fbb60bd8d31" />
+
+
+### API Documentation — Swagger UI
+<img width="1893" height="976" alt="image" src="https://github.com/user-attachments/assets/8bdf92e0-11ae-439f-832b-1c4de4bfc525" />
+
+
+---
+
 ## Local Setup
 
 **Prerequisites:** Python 3.11+, Node.js 18+, a Supabase project
@@ -302,7 +362,7 @@ updated_at (TIMESTAMPTZ) created_by (FK → users)  correlation_id (UUID)
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/zorvyn-finance.git
+git clone https://github.com/Ragulrg4853/zorvyn-finance.git
 cd zorvyn-finance
 ```
 
@@ -407,7 +467,7 @@ DATABASE_URL, SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, RATE_LIMIT_PER
 
 **Vercel environment variable required:**
 ```
-NEXT_PUBLIC_API_URL=https://your-app.up.railway.app
+NEXT_PUBLIC_API_URL=https://zorvyn-finance-production.up.railway.app
 ```
 
 ---
@@ -444,4 +504,7 @@ GET /ready   →  {"status": "ok", "db": "connected"}
 
 ---
 
-*Built as a backend assessment submission for Zorvyn FinTech.*
+---
+
+*Submitted for the Backend Developer Internship assessment at Zorvyn FinTech.*  
+*Live demo: https://zorvyn-finance-seven.vercel.app — credentials above.*
