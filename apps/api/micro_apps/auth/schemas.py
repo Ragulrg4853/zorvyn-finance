@@ -1,6 +1,6 @@
 """
 Auth schemas — request/response contracts.
-Constitution: CLAUDE.md #42 (boundary validation), #61 (correct-by-construction)
+
 """
 from uuid import UUID
 from datetime import datetime
@@ -44,4 +44,5 @@ class UserReadPublic(BaseModel):
     role: UserRole
     is_active: bool
     created_at: datetime
+    permissions: Optional[list[str]] = None
     model_config = {"from_attributes": True}

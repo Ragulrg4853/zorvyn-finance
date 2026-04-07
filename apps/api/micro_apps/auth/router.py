@@ -1,6 +1,6 @@
 """
 Auth router — HTTP contract only.
-Constitution: CLAUDE.md #10 (linear flow), #26 (boundaries — router calls service only)
+
 Response shape: {"data":..., "meta":{"correlation_id":...}, "error": null} on ALL routes.
 """
 from fastapi import APIRouter, Depends, status
@@ -8,7 +8,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from shared.database import get_db
-from shared.middleware.rbac import get_current_user, block_token, oauth2_scheme
+from shared.middleware.rbac import get_current_user, block_token, oauth2_scheme, get_cached_permissions
 from shared.middleware.correlation_id import get_correlation_id
 from shared.models.user import User
 from micro_apps.auth import service as auth_service
@@ -69,11 +69,15 @@ def login(
 @router.get("/me", summary="Get current user profile")
 def get_me(
     current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
     correlation_id: str = Depends(get_correlation_id),
 ):
     """Returns authenticated user profile."""
+    perms = get_cached_permissions(str(current_user.id), current_user.role, db)
+    user_data = UserReadPublic.model_validate(current_user).model_dump()
+    user_data["permissions"] = list(perms)
     return {
-        "data":  UserReadPublic.model_validate(current_user).model_dump(),
+        "data":  user_data,
         "meta":  {"correlation_id": correlation_id},
         "error": None,
     }

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Lock } from 'lucide-react';
 import { useEffect } from 'react';
 
-export default function ProtectedRoute({ children, requiredPermission }) {
+export default function ProtectedRoute({ children, requiredPermission, requiredPermissions }) {
   const { user, loading, hasPermission } = useAuth();
   const router = useRouter();
 
@@ -27,7 +27,15 @@ export default function ProtectedRoute({ children, requiredPermission }) {
 
   if (!user) return null;
 
-  if (requiredPermission && !hasPermission(requiredPermission)) {
+  let hasAccess = true;
+  if (requiredPermission) {
+    hasAccess = hasPermission(requiredPermission);
+  } else if (requiredPermissions && requiredPermissions.length > 0) {
+    // If an array is provided, require AT LEAST ONE of those permissions
+    hasAccess = requiredPermissions.some(perm => hasPermission(perm));
+  }
+
+  if (!hasAccess) {
     return (
       <div className="flex justify-center items-center h-full w-full p-6 animate-in fade-in duration-500">
         <div className="card glass-effect flex flex-col items-center text-center gap-4 max-w-md w-full p-8 border border-[var(--color-border)] shadow-2xl relative overflow-hidden backdrop-blur-xl bg-[rgba(10,15,30,0.5)]">
@@ -39,7 +47,7 @@ export default function ProtectedRoute({ children, requiredPermission }) {
             Access Restricted
           </h2>
           <p className="text-gray-400 text-sm m-0 leading-relaxed max-w-[280px]">
-            This section requires <strong className="text-gray-200">`{requiredPermission}`</strong> access.
+            This section requires access permissions you do not have.
           </p>
           <p className="text-gray-500 text-xs m-0 mt-2">
             Contact your administrator to request access

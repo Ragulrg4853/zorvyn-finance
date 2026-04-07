@@ -83,13 +83,15 @@ function AdminPageContent() {
   };
 
   const tabs = [
-    { id: 'users', label: 'User Management', icon: Users },
-    { id: 'roles', label: 'Roles & Permissions', icon: Shield },
-    { id: 'audit', label: 'System Audit Logs', icon: Activity },
-  ];
+    hasPermission('users:read') && { id: 'users', label: 'User Management', icon: Users },
+    hasPermission('roles:manage') && { id: 'roles', label: 'Roles & Permissions', icon: Shield },
+    hasPermission('audit:read') && { id: 'audit', label: 'System Audit Logs', icon: Activity },
+  ].filter(Boolean);
+
+  const activeTabValidated = tabs.find(t => t.id === activeTab) ? activeTab : (tabs[0]?.id || null);
 
   return (
-    <ProtectedRoute requiredPermissions={['roles:read', 'users:read']}>
+    <ProtectedRoute requiredPermissions={['roles:manage', 'users:read', 'audit:read']}>
       <AppShell user={user} onLogout={logout} hasPermission={hasPermission} pageTitle="Administration">
         <div className="flex flex-col h-full min-h-0 w-full animate-in fade-in duration-500">
           
@@ -146,14 +148,14 @@ function AdminPageContent() {
           <div className="flex-1 min-h-0 w-full rounded-2xl border border-[var(--color-border)] bg-[rgba(10,15,30,0.4)] backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col relative">
             <AnimatePresence mode="wait">
               <motion.div
-                key={activeTab}
+                key={activeTabValidated}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3 }}
                 className="flex-1 flex flex-col h-full overflow-hidden"
               >
-                {activeTab === 'users' && (
+                {activeTabValidated === 'users' && hasPermission('users:read') && (
                   <UserTable 
                     users={users} 
                     loading={usersLoading} 
@@ -166,7 +168,7 @@ function AdminPageContent() {
                     onCreateUser={() => setInviteModalOpen(true)}
                   />
                 )}
-                {activeTab === 'roles' && (
+                {activeTabValidated === 'roles' && hasPermission('roles:manage') && (
                   <PermissionMatrix 
                     roles={roles} 
                     permissions={permissions} 
@@ -181,7 +183,7 @@ function AdminPageContent() {
                     loading={rolesLoading} 
                   />
                 )}
-                {activeTab === 'audit' && (
+                {activeTabValidated === 'audit' && hasPermission('audit:read') && (
                   <AuditLogViewer 
                     logs={auditLogs} 
                     loading={auditLoading} 
