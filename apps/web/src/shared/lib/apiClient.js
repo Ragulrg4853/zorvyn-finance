@@ -1,6 +1,6 @@
 /**
  * Axios API client — single instance for all requests.
- * Constitution: CLAUDE.md #66, #37 (no sensitive data in logs)
+ 
  *
  * Responsibilities:
  *  1. Inject Authorization Bearer token on every authenticated request
@@ -48,17 +48,6 @@ apiClient.interceptors.response.use(
         window.__zorvyn_token = null;
         sessionStorage.removeItem('zorvyn_token');
         window.dispatchEvent(new CustomEvent('auth_changed', { detail: null }));
-        if (window.location.pathname !== '/login') {
-          window.location.href = '/login';
-        }
-      }
-    }
-    if (error.response.status === 403) {
-      if (typeof window !== 'undefined') {
-        window.__zorvyn_token = null;
-        sessionStorage.removeItem('zorvyn_token');
-        window.dispatchEvent(new CustomEvent('auth_changed', { detail: null }));
-        sessionStorage.setItem('auth_toast', 'Your permissions have been updated. Please log in again.');
         if (window.location.pathname !== '/login') {
           window.location.href = '/login';
         }

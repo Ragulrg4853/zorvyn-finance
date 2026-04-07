@@ -33,8 +33,8 @@ function AdminPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
-  const { users, setUsers, loading: usersLoading, error: usersError, meta: usersMeta, filters: userFilters, setFilters: setUserFilters, deactivateUser, activateUser, createUser, updateUser } = useUsers();
-  const { roles, permissions, auditLogs, loading: rolesLoading, auditLoading, error: rolesError, assignPermissions, auditFilters, setAuditFilters, auditMeta } = useRoles();
+  const { users, setUsers, loading: usersLoading, error: usersError, meta: usersMeta, filters: userFilters, setFilters: setUserFilters, deactivateUser, activateUser, createUser, updateUser } = useUsers({ enabled: hasPermission('users:read') });
+  const { roles, permissions, auditLogs, loading: rolesLoading, auditLoading, error: rolesError, assignPermissions, auditFilters, setAuditFilters, auditMeta } = useRoles({ fetchRoles: hasPermission('roles:manage'), fetchAudit: hasPermission('audit:read') });
 
   const urlTab = searchParams.get('tab') || 'users';
   const [activeTab, setActiveTab] = useState(urlTab);

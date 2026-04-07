@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import * as UserService from '../services/UserService';
 import { getErrorMessage } from '@/shared/lib/errorHandler';
 
-export function useUsers() {
+export function useUsers(options = { enabled: true }) {
   const [users, setUsers] = useState([]);
   const [meta, setMeta] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -30,8 +30,12 @@ export function useUsers() {
   }, [filters]);
 
   useEffect(() => {
-    loadUsers();
-  }, [loadUsers]);
+    if (options.enabled) {
+      loadUsers();
+    } else {
+      setLoading(false);
+    }
+  }, [loadUsers, options.enabled]);
 
   const createUser = async (payload) => {
     const newUser = await UserService.createUser(payload);

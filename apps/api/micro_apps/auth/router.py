@@ -73,7 +73,8 @@ def get_me(
     correlation_id: str = Depends(get_correlation_id),
 ):
     """Returns authenticated user profile."""
-    perms = get_cached_permissions(str(current_user.id), current_user.role, db)
+    role_name = current_user.role.value if hasattr(current_user.role, "value") else current_user.role
+    perms = get_cached_permissions(str(current_user.id), role_name, db)
     user_data = UserReadPublic.model_validate(current_user).model_dump()
     user_data["permissions"] = list(perms)
     return {

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { fetchRoles, fetchPermissions, fetchAuditLogs as apiFetchAuditLogs, assignPermissions as apiAssignPermissions } from '../services/RoleService';
 import { getErrorMessage } from '@/shared/lib/errorHandler';
 
-export function useRoles() {
+export function useRoles(options = { fetchRoles: true, fetchAudit: true }) {
   const [roles, setRoles] = useState([]);
   const [permissions, setPermissions] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
@@ -45,12 +45,14 @@ export function useRoles() {
   }, [auditFilters]);
 
   useEffect(() => {
-    fetchRolesData();
-  }, [fetchRolesData]);
+    if (options.fetchRoles) fetchRolesData();
+    else setLoading(false);
+  }, [fetchRolesData, options.fetchRoles]);
 
   useEffect(() => {
-    fetchAuditLogsData();
-  }, [fetchAuditLogsData]);
+    if (options.fetchAudit) fetchAuditLogsData();
+    else setAuditLoading(false);
+  }, [fetchAuditLogsData, options.fetchAudit]);
 
   const assignPermissions = async (roleId, payload) => {
     await apiAssignPermissions(roleId, payload);
