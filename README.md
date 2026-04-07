@@ -4,15 +4,16 @@
 security-first, permission-driven architecture. Designed for organizations 
 that require strict separation of concerns across employee access tiers.
 
-This submission covers all 6 core requirements and all 7 optional enhancements 
+> This submission covers all 6 core requirements and all 7 optional enhancements 
 from the assignment brief — including a working deployment, a complete Next.js 
 frontend, and a dynamic database-backed RBAC system with runtime permission 
 management. No local setup is required to evaluate the full application.
 The platform includes **runtime-synchronized role-based access control (RBAC)** across both the **backend authorization layer** and the **frontend navigation / action layer**.
 
-This means permissions are not only enforced at the API level, but also directly control **what each user can see and do in the UI** — including sidebar modules, pages, buttons, actions, and data views.
+> This means permissions are not only enforced at the API level, but also directly control **what each user can see and do in the UI** — including sidebar modules, pages, buttons, actions, and data views.
 
-When an admin updates a role’s permissions (for example, granting `audit:read` to Analysts or revoking `user:create` from a role), those changes are persisted in the database and reflected in the application without redeployment. Already logged-in users receive the updated access state on refresh, ensuring the UI remains aligned with backend authorization at all times.
+> When an admin updates a role’s permissions (for example, granting `audit:read` to Analysts or revoking `user:create` from a role), those changes are persisted in the database and reflected in the application without redeployment. Already logged-in users receive the updated access state on refresh, ensuring the UI remains aligned with backend authorization at all times.
+
 ---
 
 ## Live Demo
