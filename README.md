@@ -222,14 +222,17 @@ Every error response carries a machine-readable code:
 |---|---|---|---|
 | `dashboard:read` | ✅ | ✅ | ✅ |
 | `dashboard:insights` | ❌ | ✅ | ✅ |
-| `transactions:read` | ✅ | ✅ | ✅ |
+| `transactions:read` | ❌ | ✅ | ✅ |
 | `transactions:write` | ❌ | ❌ | ✅ |
 | `transactions:delete` | ❌ | ❌ | ✅ |
 | `transactions:export` | ❌ | ✅ | ✅ |
 | `users:read` | ❌ | ❌ | ✅ |
-| `users:manage` | ❌ | ❌ | ✅ |
 | `roles:manage` | ❌ | ❌ | ✅ |
 | `audit:read` | ❌ | ❌ | ✅ |
+| `user:delete` | ❌ | ❌ | ✅ |
+| `user:create` | ❌ | ❌ | ✅ |
+| `user:update` | ❌ | ❌ | ✅ |
+
 
 > Permissions are stored in the database and can be dynamically adjusted by an admin at runtime through the Roles & Permissions panel. Changes take effect within 2 minutes without a redeploy.
 
