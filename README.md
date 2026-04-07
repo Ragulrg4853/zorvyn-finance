@@ -339,7 +339,8 @@ updated_at (TIMESTAMPTZ) created_by (FK → users)  correlation_id (UUID)
 
 
 ### System Audit Logs — Immutable Activity Ledger
-<img width="1911" height="977" alt="image" src="https://github.com/user-attachments/assets/d1ab24e6-6612-4aad-b45b-eb8a5301dc23" />
+<img width="1916" height="983" alt="image" src="https://github.com/user-attachments/assets/81630f77-4330-404b-8cf0-810a00a13e8f" />
+
 
 
 ### Real-Time Notifications
